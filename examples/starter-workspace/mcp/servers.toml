@@ -1,0 +1,9 @@
+# Non-secret MCP connection templates.
+
+# env values must be secret:env/NAME or secret:file/PATH references —
+# literal credentials are rejected at workspace validation time.
+
+[servers.time]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-time"]
+transport = "stdio"

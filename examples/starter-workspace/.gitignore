@@ -1,0 +1,6 @@
+workspace.local.toml
+state/
+backups/
+secrets/
+*.secret
+.DS_Store

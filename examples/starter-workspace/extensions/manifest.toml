@@ -1,0 +1,6 @@
+# Expected-state extension declarations (source + pinned version).
+
+# v1 grades every extension `manual` on every target: skillferry declares the
+# expected state but never installs or upgrades extensions by itself.
+
+[extensions]

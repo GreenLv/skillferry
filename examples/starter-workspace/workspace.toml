@@ -1,0 +1,21 @@
+schema_version = 1
+
+[skills]
+directory = "skills"
+default_targets = ["codex", "claude", "dsh"]
+
+[instructions]
+common = "instructions/global.md"
+
+[mcp]
+registry = "mcp/servers.toml"
+
+[extensions]
+manifest = "extensions/manifest.toml"
+
+[overlays]
+platform_dir = "overlays/platform"
+target_dir = "overlays/target"
+
+[protect]
+paths = []

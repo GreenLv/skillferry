@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skillferry"
+version = "0.1.0"
+description = "Portable agent workspace: render skills, rules, and MCP templates across Codex, Claude Code, and DeepSeek Harness without copying secrets."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Gerui Lv" }]
+keywords = ["codex", "claude", "skills", "mcp", "sync", "agents", "portable"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Utilities",
+]
+dependencies = [
+  "platformdirs>=4.0,<5",
+  "tomlkit>=0.11,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "pytest>=7.4",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+skillferry = "skillferry.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillferry"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
