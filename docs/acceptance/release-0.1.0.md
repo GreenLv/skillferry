@@ -1,6 +1,6 @@
 # Release 0.1.0 acceptance evidence
 
-Status: **GitHub release published; PyPI publish pending owner configuration** ·
+Status: **released and published** ·
 Date: 2026-08-20 · Version: 0.1.0 · Tag: `v0.1.0` ·
 Commit: `a78bf54d042ce1cf7eb16a056237fd32bb56d238` ·
 Platform: macOS (aarch64) · Python 3.12.2
@@ -55,10 +55,10 @@ the GitHub release, delete tag `v0.1.0`, and the project is unpublished.
   `git ls-remote --tags origin`.
 - Workflow run 32382725301: `Build and inspect distributions` succeeded
   (artifact `python-package-distributions`, 163 271 bytes).
-- `Publish to PyPI` **failed**: PyPI returned `invalid-publisher` — no
-  trusted publisher matches `GreenLv/skillferry`, workflow `release.yml`,
-  environment `pypi`. This is a PyPI-account configuration step, not a
-  repository defect. Owner action: add the pending publisher on
-  https://pypi.org (project `skillferry`, owner `GreenLv`, repository
-  `skillferry`, workflow `release.yml`, environment `pypi`), then re-run
-  the failed job (`gh run rerun 32382725301 --failed`).
+- First `Publish to PyPI` attempt failed with `invalid-publisher`; after
+  the owner added the PyPI trusted publisher (`GreenLv/skillferry`,
+  `release.yml`, environment `pypi`), the job was re-run and succeeded.
+- PyPI readback: `https://pypi.org/pypi/skillferry/json` → HTTP 200,
+  version `0.1.0`, wheel + sdist, neither yanked (uploaded 2026-08-20).
+- Independent install: fresh venv `pip install skillferry==0.1.0` from
+  PyPI → `skillferry --version` → `0.1.0`.
