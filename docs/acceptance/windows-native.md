@@ -139,6 +139,10 @@ The wheel was force-reinstalled without dependencies into the isolated venv;
 5. Re-importing an already managed Codex/Claude rules file retained
    SKILLFERRY marker delimiters, causing nested blocks on the next plan.
    Import now removes target ownership delimiters while retaining rule bodies.
+6. The first post-push CI run exposed a Python 3.11-only test-helper issue:
+   `Path.is_junction()` is unavailable there. Junction creation verification
+   now checks the Windows reparse-point file attribute, matching the runtime
+   implementation and retaining Python 3.11 support.
 
 ## Remaining limitations
 

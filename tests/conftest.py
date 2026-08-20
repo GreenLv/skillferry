@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -39,7 +40,7 @@ def make_junction(link: Path, target: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert link.is_junction()
+    assert os.lstat(link).st_file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT
 
 
 @pytest.fixture()
