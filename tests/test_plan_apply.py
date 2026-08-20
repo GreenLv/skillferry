@@ -20,22 +20,24 @@ def test_apply_creates_all_three_target_shapes(tmp_path, state_dir, fake_home):
 
     # Codex: config.toml section + AGENTS.md marker block + shared skill root
     config = (fake_home / ".codex" / "config.toml").read_text(encoding="utf-8")
-    assert '[mcp_servers.time]' in config and 'command = "npx"' in config
+    assert '[mcp_servers.everything]' in config and 'command = "npx"' in config
+    assert "@modelcontextprotocol/server-everything" in config
     agents = (fake_home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
     assert "<!-- BEGIN SKILLFERRY RULES global -->" in agents
     assert (fake_home / ".agents" / "skills" / "release-checklist" / "SKILL.md").is_file()
 
     # Claude: user-level .claude.json + CLAUDE.md + own skill dir
     claude_json = json.loads((fake_home / ".claude" / ".claude.json").read_text())
-    assert claude_json["mcpServers"]["time"]["command"] == "npx"
+    assert claude_json["mcpServers"]["everything"]["command"] == "npx"
     assert "SKILLFERRY RULES" in (fake_home / ".claude" / "CLAUDE.md").read_text()
     assert (fake_home / ".claude" / "skills" / "setup-skillferry" / "SKILL.md").is_file()
 
     # DSH: cordis.patch.yml insert block + AGENTS.md + shared skill root
     patch = (fake_home / ".dsh" / "profiles" / "web" / "cordis.patch.yml").read_text()
     assert "# >>> BEGIN SKILLFERRY DSH MCP >>>" in patch
-    assert "id: mcp-time" in patch
-    assert "serverName: time" in patch
+    assert "id: mcp-everything" in patch
+    assert "serverName: everything" in patch
+    assert "@modelcontextprotocol/server-everything" in patch
     dsh_agents = (fake_home / ".dsh" / "AGENTS.md").read_text()
     assert "SKILLFERRY RULES" in dsh_agents
 
@@ -62,8 +64,8 @@ def test_source_change_is_update_not_conflict(tmp_path, state_dir, fake_home):
     apply_workspace(ws, fake_home)
     registry = (ws / "mcp" / "servers.toml").read_text(encoding="utf-8")
     (ws / "mcp" / "servers.toml").write_text(
-        registry.replace('"@modelcontextprotocol/server-time"',
-                         '"@modelcontextprotocol/server-time", "--debug"'),
+        registry.replace('"@modelcontextprotocol/server-everything"',
+                         '"@modelcontextprotocol/server-everything", "--debug"'),
         encoding="utf-8",
     )
     plan = plan_workspace(ws, fake_home)
@@ -173,13 +175,13 @@ def test_source_mcp_removal_deletes_all_owned_target_entries(
         "dsh",
     }
     apply_plan(plan)
-    assert "mcp_servers.time" not in (
+    assert "mcp_servers.everything" not in (
         fake_home / ".codex" / "config.toml"
     ).read_text(encoding="utf-8")
     claude = json.loads((fake_home / ".claude" / ".claude.json").read_text())
-    assert "time" not in claude["mcpServers"]
+    assert "everything" not in claude["mcpServers"]
     dsh = (fake_home / ".dsh" / "profiles" / "web" / "cordis.patch.yml").read_text()
-    assert "mcp-time" not in dsh
+    assert "mcp-everything" not in dsh
 
 
 def test_source_mcp_removal_conflicts_with_local_modification(
@@ -246,7 +248,8 @@ def test_dsh_handwritten_collision_conflicts(tmp_path, state_dir, fake_home):
     patch_dir = fake_home / ".dsh" / "profiles" / "web"
     patch_dir.mkdir(parents=True)
     (patch_dir / "cordis.patch.yml").write_text(
-        "- insert:\n    - id: mcp-time\n      name: handwritten\n", encoding="utf-8"
+        "- insert:\n    - id: mcp-everything\n      name: handwritten\n",
+        encoding="utf-8",
     )
     plan = plan_workspace(ws, fake_home)
     assert any(
@@ -407,4 +410,4 @@ def test_claude_json_other_keys_preserved(tmp_path, state_dir, fake_home):
     apply_workspace(ws, fake_home)
     document = json.loads((claude_home / ".claude.json").read_text())
     assert document["hasCompletedOnboarding"] is True
-    assert document["mcpServers"]["time"]["command"] == "npx"
+    assert document["mcpServers"]["everything"]["command"] == "npx"

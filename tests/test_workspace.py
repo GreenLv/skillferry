@@ -217,8 +217,9 @@ def test_extension_missing_version_rejected(tmp_path):
 def test_mcp_overlay_partial_merge(tmp_path):
     ws = make_workspace(tmp_path)
     (ws / "overlays" / "target" / "codex.toml").write_text(
-        '[mcp.servers.time]\ncommand = "npx"\nargs = ["-y", "server-time", "--extra"]\n',
+        '[mcp.servers.everything]\ncommand = "npx"\n'
+        'args = ["-y", "@modelcontextprotocol/server-everything", "--extra"]\n',
         encoding="utf-8",
     )
-    spec = load_mcp_registry(load(ws, target="codex"))["time"]
-    assert spec.args == ("-y", "server-time", "--extra")
+    spec = load_mcp_registry(load(ws, target="codex"))["everything"]
+    assert spec.args == ("-y", "@modelcontextprotocol/server-everything", "--extra")

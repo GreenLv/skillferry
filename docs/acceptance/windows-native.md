@@ -12,8 +12,8 @@ that contains this document.
 - Windows registry product: Windows 10 Home China, DisplayVersion 25H2,
   build 26200.9168, x64 (the NT build is the authoritative version datum).
 - PowerShell 7.6.4; CPython 3.12.10; skillferry 0.1.0.
-- Node and `npx.cmd` were present. Codex CLI 0.146.0 was discoverable;
-  Claude Code and DSH executables were not installed.
+- Node and `npx.cmd` were present. Codex CLI 0.146.0 and DSH 0.1.0-rc.8
+  (`dsh.cmd`) were discoverable; Claude Code was not installed.
 - The source was installed into a dedicated venv, first editable with the
   dev extras and then from the locally built wheel.
 - Every rehearsal used an explicit fake home named `用户 验收 Home`, explicit
@@ -44,6 +44,28 @@ The following was run from the installed wheel against a copy of
 The `npx.cmd` command was read back from all three native target shapes:
 Codex `config.toml`, Claude `.claude.json`, and the DSH
 `cordis.patch.yml` insert block.
+
+## Native DSH process loading
+
+A follow-up process-level check used the installed `dsh.cmd` 0.1.0-rc.8 with
+an additional isolated fake home named `假 HOME with spaces`, explicit
+`DSH_HOME`, and separate `SKILLFERRY_STATE_DIR`. `skillferry apply --target
+dsh` and `doctor` both passed. DSH `--dump-config` then read back the generated
+`@deepseek-ai/dsh-mcp-client` entry and its MCP command from the isolated
+profile.
+
+The first DSH Web launch exposed that the starter workspace referenced the
+nonexistent npm package `@modelcontextprotocol/server-time`; npm returned 404.
+The official Time server is a Python package, while the official npm reference
+server is `@modelcontextprotocol/server-everything`. The starter workspace was
+corrected to the latter and a regression assertion now checks the rendered
+Codex and DSH configurations for that package.
+
+After the correction, DSH Web was launched with `--no-open --host 127.0.0.1`
+on a dedicated test port. The root endpoint returned HTTP 200, the generated
+profile remained under the fake `DSH_HOME`, and the exact listener process was
+stopped; a subsequent probe confirmed the port was closed. No real DSH profile
+or agent configuration directory was an apply target.
 
 ## Windows-specific results
 
@@ -115,13 +137,14 @@ python scripts/validate_workspace.py examples/starter-workspace
 [OK] claude/windows
 [OK] dsh/windows
 
-python -m build
+python -m build --no-isolation
 Successfully built skillferry-0.1.0.tar.gz and
 skillferry-0.1.0-py3-none-any.whl
 ```
 
-The wheel was force-reinstalled without dependencies into the isolated venv;
-`python -m skillferry --version` returned `0.1.0`.
+The declared Hatchling backend was installed only into the isolated acceptance
+venv before the no-isolation build. The wheel was force-reinstalled without
+dependencies into that venv; `python -m skillferry --version` returned `0.1.0`.
 
 ## Defects found and fixed during acceptance
 
@@ -143,11 +166,22 @@ The wheel was force-reinstalled without dependencies into the isolated venv;
    `Path.is_junction()` is unavailable there. Junction creation verification
    now checks the Windows reparse-point file attribute, matching the runtime
    implementation and retaining Python 3.11 support.
+7. A real DSH startup exposed that the starter workspace used the nonexistent
+   npm package `@modelcontextprotocol/server-time`. The example now uses the
+   published official npm reference server
+   `@modelcontextprotocol/server-everything`, with rendered-config regression
+   coverage and a successful DSH Web HTTP probe.
 
 ## Remaining limitations
 
-- Claude Code and DSH were not installed, so this run validates their native
-  on-disk configuration shapes but not process startup or client-side loading.
+- Claude Code was not installed, so its native on-disk configuration shape was
+  validated but its client process was not started. DSH on-disk configuration,
+  composed-config loading, MCP launch behavior, and Web process startup were
+  exercised natively.
+- In PowerShell, the unqualified `dsh` command resolves first to a stale
+  `dsh.ps1` shim that references a missing module; the co-installed `dsh.cmd`
+  works and was used for acceptance. This is a local launcher-installation
+  issue outside the repository, not a SkillFerry configuration failure.
 - The two privileged symbolic-link creation tests were not run elevated;
   they skipped explicitly. Non-elevated NTFS junction refusal passed.
 - Windows agent config secrecy remains dependent on parent-directory ACLs;

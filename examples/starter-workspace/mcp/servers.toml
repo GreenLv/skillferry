@@ -3,7 +3,7 @@
 # env values must be secret:env/NAME or secret:file/PATH references —
 # literal credentials are rejected at workspace validation time.
 
-[servers.time]
+[servers.everything]
 command = "npx"
-args = ["-y", "@modelcontextprotocol/server-time"]
+args = ["-y", "@modelcontextprotocol/server-everything"]
 transport = "stdio"
