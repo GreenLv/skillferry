@@ -1,5 +1,7 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+# hatchling 1.32+ emits Metadata-Version 2.5, which twine 6.2 / packaging
+# 26.x reject; keep builds on 2.4 until the toolchain accepts 2.5.
+requires = ["hatchling>=1.25,<1.32"]
 build-backend = "hatchling.build"
 
 [project]
