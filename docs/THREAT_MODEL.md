@@ -1,5 +1,7 @@
 # Threat model
 
+> 中文版：[安全威胁模型](zh-CN/THREAT_MODEL.md)
+
 skillferry moves **capability definitions**, never secrets and never machine
 state. This document lists the assets, the trust boundaries, the threats the
 design refuses, and what is explicitly out of scope.

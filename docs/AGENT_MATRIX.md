@@ -1,5 +1,7 @@
 # Adapter capability evidence matrix
 
+> 中文版：[适配器能力证据矩阵](zh-CN/AGENT_MATRIX.md)
+
 Every grade printed by `skillferry plan` must be backed by evidence recorded
 here. **An adapter never claims `native` for an untested behavior.** The
 sources are: (E1) the author's own macOS acceptance runs

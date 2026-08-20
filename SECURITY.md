@@ -1,5 +1,7 @@
 # Security policy
 
+> 中文版：[安全策略](SECURITY.zh-CN.md)
+
 ## Supported versions
 
 Only the latest release receives security fixes. skillferry is currently in

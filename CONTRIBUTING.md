@@ -1,5 +1,7 @@
 # Contributing
 
+> 中文版：[贡献指南](CONTRIBUTING.zh-CN.md)
+
 skillferry is a headless CLI built around three promises: **target
 neutrality, a portability contract, and secrets that never move**. A
 contribution that weakens any of them is a regression, not a feature.

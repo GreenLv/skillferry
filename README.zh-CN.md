@@ -10,6 +10,21 @@ skillferry 把一份可版本化、可提交 Git 的 workspace 定义——Skill
 > 同步能力，不复制秘密。· 写一次 Skill，到处可跑。· 你的 Agent 能力资产，
 > 不该锁在某个客户端里。
 
+## 目录
+
+- [30 秒演示](#30-秒演示)
+- [Before / After](#before--after)
+- [三步开始](#三步开始)
+- [兼容性矩阵](#兼容性矩阵)
+- [安全边界](#安全边界)
+- [Workspace 布局](#workspace-布局)
+- [不是什么](#不是什么)
+- [适配器开发](#适配器开发)
+- [从 codex-profile-sync 迁移](#从-codex-profile-sync-迁移)
+- [文档地图](#文档地图)
+- [路线图](#路线图)
+- [许可](#许可)
+
 ## 30 秒演示
 
 ```console
@@ -81,6 +96,14 @@ $ skillferry doctor        # exit 0 = 完全同步
 | MCP（http/sse） | `manual`（打印按目标的手工步骤） | `manual` | `manual` |
 | 扩展/插件 | `manual` — 只声明期望状态，绝不自动安装 | `manual` | `manual` |
 
+### 等级含义速览
+
+`plan` 的等级是对*加载*的承诺：`native` 以目标自身格式加载、无损；
+`translated` 可用，但经过备注点名的转换；`degraded` 可用，但有已知限制或
+未验证行为；`manual` 只打印操作说明、不写文件；`unsupported` 不适用。
+完整契约——合并顺序、冲突与退出码——见
+[docs/zh-CN/PORTABILITY_CONTRACT.md](docs/zh-CN/PORTABILITY_CONTRACT.md)。
+
 ## 安全边界
 
 安全是架构而不是文档，完整模型见
@@ -120,7 +143,8 @@ schema_version = 1
 ## 不是什么
 
 skillferry 刻意做成无头 CLI。它不是全量 dotfiles 同步器（只管理显式声明的
-结构化资产）、从不创建软链接（schema 层拒绝）、没有 GUI、不切换 API
+结构化资产）、从不创建软链接或 Windows junction/reparse point（schema 层
+拒绝）、没有 GUI、不切换 API
 供应商、不同步会话/记忆、不承诺"任意插件无损转换"。与现有工具的诚实对比
 （包括可写与不可写的声明边界）见
 [docs/COMPARISON.md](docs/COMPARISON.md)。
@@ -137,6 +161,23 @@ skillferry 刻意做成无头 CLI。它不是全量 dotfiles 同步器（只管�
 bundle 的 skills 与 MCP 声明转换成 draft workspace（凭据值转为
 `secret:env/...` 引用；旧 bundle 永不改动）。详见
 [docs/MIGRATION.md](docs/MIGRATION.md)。
+
+## 文档地图
+
+[docs/](docs/) 目录的完整索引见 [docs/README.md](docs/README.md)。按角色
+出发：
+
+| 角色 | 从这里开始 |
+| --- | --- |
+| 所有人 | [docs/zh-CN/PORTABILITY_CONTRACT.md](docs/zh-CN/PORTABILITY_CONTRACT.md) —— 等级、合并顺序、冲突与退出码 |
+| 安全评审 | [docs/zh-CN/THREAT_MODEL.md](docs/zh-CN/THREAT_MODEL.md) + [SECURITY.zh-CN.md](SECURITY.zh-CN.md) |
+| 贡献者 | [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md) + [docs/zh-CN/AGENT_MATRIX.md](docs/zh-CN/AGENT_MATRIX.md) |
+| 对比替代方案 | [docs/zh-CN/COMPARISON.md](docs/zh-CN/COMPARISON.md) |
+| 旧版迁移 | [docs/zh-CN/MIGRATION.md](docs/zh-CN/MIGRATION.md) |
+| 验收证据 | [docs/acceptance/macos-native.md](docs/acceptance/macos-native.md) · [docs/acceptance/windows-native.md](docs/acceptance/windows-native.md)（英文证据记录） |
+
+英文文档入口为 [README.md](README.md)；更新历史见 [CHANGELOG.md](CHANGELOG.md)
+（英文）。
 
 ## 路线图
 

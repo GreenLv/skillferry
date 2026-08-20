@@ -1,5 +1,7 @@
 # Portability contract
 
+> 中文版：[可移植性契约](zh-CN/PORTABILITY_CONTRACT.md)
+
 `skillferry plan` is a promise, not a progress bar: for every asset and
 every target it prints a grade plus the losses, so "applied" never hides
 "translated with something dropped". This document is that contract.

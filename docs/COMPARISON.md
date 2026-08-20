@@ -1,5 +1,7 @@
 # Comparison with existing tools
 
+> 中文版：[与现有工具对比](zh-CN/COMPARISON.md)
+
 Measured 2026-08 via the GitHub API (stars) and repository activity
 (last push). "Active" = pushed within roughly the last 3 months at
 measurement time; the table is a point-in-time measurement, not a trend

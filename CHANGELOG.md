@@ -2,6 +2,17 @@
 
 All notable changes to skillferry are documented here, newest first.
 
+## Unreleased
+
+### Docs
+
+- Added a documentation index for the `docs/` tree
+  ([docs/README.md](docs/README.md)) and Chinese translations of the core
+  documents ([docs/zh-CN/](docs/zh-CN/), `CONTRIBUTING.zh-CN.md`,
+  `SECURITY.zh-CN.md`).
+- READMEs gained tables of contents, a grade glossary, and a documentation
+  map; the Chinese README was resynced with the English one.
+
 ## 0.1.0 — 2026-08-19
 
 First release: the portable agent-workspace core (roadmap stage A).

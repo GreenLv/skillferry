@@ -11,6 +11,21 @@ tells you honestly, per asset, how portable that asset is.
 > Sync capabilities, not credentials. · Write skills once. Run them across
 > agents. · Your agent capabilities should not be locked inside one client.
 
+## Table of contents
+
+- [30-second demo](#30-second-demo)
+- [Before / after](#before--after)
+- [Quick start](#quick-start)
+- [Compatibility matrix](#compatibility-matrix)
+- [Security boundary](#security-boundary)
+- [Workspace layout](#workspace-layout)
+- [Not a dotfiles / symlink / GUI tool](#not-a-dotfiles--symlink--gui-tool)
+- [Adapter development](#adapter-development)
+- [Migrating from codex-profile-sync](#migrating-from-codex-profile-sync)
+- [Documentation map](#documentation-map)
+- [Roadmap](#roadmap)
+- [License](#license)
+
 ## 30-second demo
 
 ```console
@@ -78,6 +93,15 @@ without a verified loading path.
 | MCP (stdio) | `translated` — `[mcp_servers.<name>]` in `~/.codex/config.toml`; secrets resolved from local env | `translated` — user-level `~/.claude.json` `mcpServers` ([docs](https://code.claude.com/docs/en/mcp)) | `translated` — `dsh-mcp-client` entries in the profile `cordis.patch.yml` |
 | MCP (http/sse) | `manual` (per-target instructions printed) | `manual` | `manual` |
 | Extensions/plugins | `manual` — declared expected state, never auto-installed | `manual` | `manual` |
+
+### What the grades mean
+
+`plan` grades are a promise about *loading*: `native` loads in the target's
+own format with nothing lost; `translated` works after a transformation the
+notes name; `degraded` works with known limits or unverified behavior;
+`manual` prints instructions instead of writing; `unsupported` does not
+apply. The full contract — merge order, conflicts, and exit codes — is in
+[docs/PORTABILITY_CONTRACT.md](docs/PORTABILITY_CONTRACT.md).
 
 ## Security boundary
 
@@ -148,6 +172,24 @@ must meet.
 the legacy bundle's skills and MCP declarations into a draft workspace
 (credential values become `secret:env/...` references; the bundle is never
 modified). Details in [docs/MIGRATION.md](docs/MIGRATION.md).
+
+## Documentation map
+
+The [docs/](docs/) tree is indexed by [docs/README.md](docs/README.md). For
+your role, start with:
+
+| Role | Start with |
+| --- | --- |
+| Everyone | [docs/PORTABILITY_CONTRACT.md](docs/PORTABILITY_CONTRACT.md) — grades, merge order, conflicts, exit codes |
+| Security review | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) + [SECURITY.md](SECURITY.md) |
+| Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) + [docs/AGENT_MATRIX.md](docs/AGENT_MATRIX.md) |
+| Comparing alternatives | [docs/COMPARISON.md](docs/COMPARISON.md) |
+| Legacy migration | [docs/MIGRATION.md](docs/MIGRATION.md) |
+| Evidence records | [docs/acceptance/macos-native.md](docs/acceptance/macos-native.md) · [docs/acceptance/windows-native.md](docs/acceptance/windows-native.md) |
+
+Chinese translations: [README.zh-CN.md](README.zh-CN.md) is the entry point,
+core documents live in [docs/zh-CN/](docs/zh-CN/). Release history:
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap
 

@@ -1,5 +1,7 @@
 # Migration from codex-profile-sync
 
+> 中文版：[迁移指南](zh-CN/MIGRATION.md)
+
 `skillferry` is the productized successor to the private
 [codex-profile-sync](https://github.com/GreenLv/codex-profile-sync) engine
 (Codex-only, profile-oriented). The legacy bundle is **never modified** by
