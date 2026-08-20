@@ -4,16 +4,7 @@ All notable changes to skillferry are documented here, newest first.
 
 ## Unreleased
 
-### Docs
-
-- Added a documentation index for the `docs/` tree
-  ([docs/README.md](docs/README.md)) and Chinese translations of the core
-  documents ([docs/zh-CN/](docs/zh-CN/), `CONTRIBUTING.zh-CN.md`,
-  `SECURITY.zh-CN.md`).
-- READMEs gained tables of contents, a grade glossary, and a documentation
-  map; the Chinese README was resynced with the English one.
-
-## 0.1.0 — 2026-08-19
+## 0.1.0 — 2026-08-20
 
 First release: the portable agent-workspace core (roadmap stage A).
 
@@ -45,6 +36,15 @@ First release: the portable agent-workspace core (roadmap stage A).
   PORTABILITY_CONTRACT, COMPARISON, MIGRATION, and the macOS native
   acceptance record.
 
+### Docs
+
+- Added a documentation index for the `docs/` tree
+  ([docs/README.md](docs/README.md)) and Chinese translations of the core
+  documents ([docs/zh-CN/](docs/zh-CN/), `CONTRIBUTING.zh-CN.md`,
+  `SECURITY.zh-CN.md`).
+- READMEs gained tables of contents, a grade glossary, and a documentation
+  map; the Chinese README was resynced with the English one.
+
 ### Fixed
 
 - Hardened multiline secret scanning, imported-skill inspection, opaque-binary
@@ -55,3 +55,6 @@ First release: the portable agent-workspace core (roadmap stage A).
 - Reconciled whole-skill and MCP-server removals across Codex, Claude Code, and
   DeepSeek Harness without deleting locally modified owned content silently.
 - Expanded the regression suite from 68 to 79 tests.
+- Pinned the build backend to `hatchling<1.32` so distributions keep
+  `Metadata-Version: 2.4`, which passes `twine check --strict` (hatchling
+  1.32+ emits 2.5, rejected by twine 6.2 / packaging 26.x).
