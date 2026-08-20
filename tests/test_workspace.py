@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from conftest import make_workspace
+from conftest import make_junction, make_symlink_or_skip, make_workspace
 
 from skillferry.workspace import (
     WorkspaceError,
@@ -151,8 +151,16 @@ def test_skill_name_mismatch_rejected(tmp_path):
 def test_skill_symlink_rejected(tmp_path):
     ws = make_workspace(tmp_path)
     target = ws / "skills" / "setup-skillferry"
-    (ws / "skills" / "linked").symlink_to(target)
+    make_symlink_or_skip(ws / "skills" / "linked", target, target_is_directory=True)
     with pytest.raises(WorkspaceError, match="symlink"):
+        load_skills(load(ws))
+
+
+def test_skill_junction_rejected(tmp_path):
+    ws = make_workspace(tmp_path)
+    target = ws / "skills" / "setup-skillferry"
+    make_junction(ws / "skills" / "linked", target)
+    with pytest.raises(WorkspaceError, match="junction"):
         load_skills(load(ws))
 
 

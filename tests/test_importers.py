@@ -85,6 +85,23 @@ def test_import_codex_nonempty_destination_rejected(tmp_path):
         import_codex(output=output, codex_home=codex, skills_home=skills)
 
 
+def test_import_codex_dematerializes_skillferry_rule_markers(tmp_path):
+    codex, skills = build_codex_home(tmp_path / "src")
+    (codex / "AGENTS.md").write_text(
+        "# local rules\n"
+        "<!-- BEGIN SKILLFERRY RULES global -->\n"
+        "# portable rules\n"
+        "<!-- END SKILLFERRY RULES global -->\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "out"
+    import_codex(output=output, codex_home=codex, skills_home=skills)
+    rules = (output / "instructions" / "global.md").read_text(encoding="utf-8")
+    assert "# local rules" in rules
+    assert "# portable rules" in rules
+    assert "SKILLFERRY RULES" not in rules
+
+
 def test_import_claude_classifies(tmp_path):
     claude = tmp_path / ".claude"
     (claude / "skills" / "demo-skill").mkdir(parents=True)

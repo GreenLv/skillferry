@@ -13,6 +13,7 @@ import os
 import re
 from pathlib import Path, PurePosixPath
 
+from .paths import is_linklike
 from .workspace import WorkspaceError
 
 SECRET_REF_RE = re.compile(r"^secret:(env|file)/(.+)$", re.DOTALL)
@@ -84,8 +85,10 @@ def _refuse_symlink_traversal(root: Path, path: Path, label: str) -> None:
     current = root
     for part in path.relative_to(root).parts:
         current = current / part
-        if current.is_symlink():
-            raise WorkspaceError(f"{label}: reference traverses a symlink: {path}")
+        if is_linklike(current):
+            raise WorkspaceError(
+                f"{label}: reference traverses a symlink or junction: {path}"
+            )
 
 
 def resolve_secret(
@@ -114,7 +117,7 @@ def resolve_secret(
             )
         return env[spec]
     path = Path(spec) if PurePosixPath(spec).is_absolute() else workspace_root / spec
-    if path.is_symlink() or not path.is_file():
+    if is_linklike(path) or not path.is_file():
         raise WorkspaceError(f"{label}: secret file is missing or unsafe: {path}")
     try:
         return path.read_text(encoding="utf-8").strip()

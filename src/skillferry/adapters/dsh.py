@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models import Change, TextWrite
+from ..paths import is_linklike
 from ..workspace import Extension, ServerSpec, WorkspaceError
 from .base import Adapter, TargetEnv, mcp_entry_decision, mcp_removal_decision
 
@@ -165,8 +166,8 @@ class DshAdapter(Adapter):
 
     def skill_dir(self, env: TargetEnv) -> Path:
         raw = env.home / ".agents" / "skills"
-        if raw.is_symlink():
-            raise ValueError(f"skills target may not be a symlink: {raw}")
+        if is_linklike(raw):
+            raise ValueError(f"skills target may not be a symlink or junction: {raw}")
         return raw.resolve()
 
     def rules_file(self, env: TargetEnv) -> Path:
@@ -235,7 +236,7 @@ class DshAdapter(Adapter):
                     "mcp", server.name, str(exc), str(exc), f"mcp:{ctx.target}:{server.name}"
                 )
             return
-        if target.is_symlink() or (target.exists() and not target.is_file()):
+        if is_linklike(target) or (target.exists() and not target.is_file()):
             for server in servers:
                 ctx.conflict(
                     "mcp",
@@ -246,7 +247,11 @@ class DshAdapter(Adapter):
                 )
             return
 
-        original = target.read_text(encoding="utf-8") if target.exists() else ""
+        if target.exists():
+            with target.open("r", encoding="utf-8", newline="") as handle:
+                original = handle.read()
+        else:
+            original = ""
         resolved_map: dict[str, dict[str, str]] = {}
         for server in servers:
             resolved = resolved_env(ctx, server)

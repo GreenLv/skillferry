@@ -7,6 +7,7 @@ from pathlib import Path
 
 import tomlkit
 
+from ..paths import is_linklike
 from ..secrets import looks_like_secret, scan_text
 from .base import (
     Finding,
@@ -14,6 +15,7 @@ from .base import (
     audit_tree,
     classify_name,
     copy_tree,
+    dematerialize_rules,
     empty_manifests,
     prepare_output,
     workspace_manifest_text,
@@ -131,8 +133,8 @@ def _registry_entries(claude_json: Path, report: ImportReport) -> dict[str, dict
 def import_claude(*, output: Path, claude_home: Path | None = None) -> ImportReport:
     home = Path.home()
     claude = (claude_home or home / ".claude").expanduser()
-    if claude.is_symlink():
-        raise ValueError(f"claude home may not be a symlink: {claude}")
+    if is_linklike(claude):
+        raise ValueError(f"claude home may not be a symlink or junction: {claude}")
     claude = claude.resolve()
 
     destination = prepare_output(output)
@@ -160,8 +162,8 @@ def import_claude(*, output: Path, claude_home: Path | None = None) -> ImportRep
                 )
 
     claude_md = claude / "CLAUDE.md"
-    if claude_md.is_file() and not claude_md.is_symlink():
-        text = claude_md.read_text(encoding="utf-8")
+    if claude_md.is_file() and not is_linklike(claude_md):
+        text = dematerialize_rules(claude_md.read_text(encoding="utf-8"))
         findings = scan_text(text, label="CLAUDE.md")
         if findings:
             report.findings.append(
@@ -179,7 +181,7 @@ def import_claude(*, output: Path, claude_home: Path | None = None) -> ImportRep
             )
 
     claude_json = claude / ".claude.json"
-    if claude_json.is_file() and not claude_json.is_symlink():
+    if claude_json.is_file() and not is_linklike(claude_json):
         entries = _registry_entries(claude_json, report)
         if entries:
             _write_registry(destination, entries)

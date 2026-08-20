@@ -8,6 +8,7 @@ from pathlib import Path
 
 import tomlkit
 
+from ..paths import is_linklike
 from ..secrets import looks_like_secret, scan_text
 from .base import (
     Finding,
@@ -15,6 +16,7 @@ from .base import (
     audit_tree,
     classify_name,
     copy_tree,
+    dematerialize_rules,
     empty_manifests,
     prepare_output,
     workspace_manifest_text,
@@ -123,12 +125,12 @@ def import_codex(
         codex_home
         or (Path(configured).expanduser() if configured else home / ".codex")
     ).expanduser()
-    if codex.is_symlink():
-        raise ValueError(f"codex home may not be a symlink: {codex}")
+    if is_linklike(codex):
+        raise ValueError(f"codex home may not be a symlink or junction: {codex}")
     codex = codex.resolve()
     skills = (skills_home or home / ".agents" / "skills").expanduser()
-    if skills.is_symlink():
-        raise ValueError(f"skills root may not be a symlink: {skills}")
+    if is_linklike(skills):
+        raise ValueError(f"skills root may not be a symlink or junction: {skills}")
     skills = skills.resolve()
 
     destination = prepare_output(output)
@@ -155,7 +157,7 @@ def import_codex(
                 )
 
     config_path = codex / "config.toml"
-    if config_path.is_file() and not config_path.is_symlink():
+    if config_path.is_file() and not is_linklike(config_path):
         try:
             with config_path.open("rb") as handle:
                 config = tomllib.load(handle)
@@ -178,8 +180,8 @@ def import_codex(
             )
 
     agents_md = codex / "AGENTS.md"
-    if agents_md.is_file() and not agents_md.is_symlink():
-        text = agents_md.read_text(encoding="utf-8")
+    if agents_md.is_file() and not is_linklike(agents_md):
+        text = dematerialize_rules(agents_md.read_text(encoding="utf-8"))
         findings = scan_text(text, label="AGENTS.md")
         if findings:
             report.findings.append(

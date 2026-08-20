@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from conftest import make_junction, make_symlink_or_skip
 
 from skillferry.migrate import migrate_codex_profile_sync
 
@@ -69,8 +70,17 @@ def test_migrate_rejects_symlink_inside_skills(tmp_path):
     bundle = build_bundle(tmp_path)
     outside = tmp_path / "private.txt"
     outside.write_text("private", encoding="utf-8")
-    (bundle / "skills" / "demo-skill" / "linked.txt").symlink_to(outside)
+    make_symlink_or_skip(bundle / "skills" / "demo-skill" / "linked.txt", outside)
     with pytest.raises(ValueError, match="symlink"):
+        migrate_codex_profile_sync(bundle, tmp_path / "out")
+
+
+def test_migrate_rejects_junction_inside_skills(tmp_path):
+    bundle = build_bundle(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    make_junction(bundle / "skills" / "demo-skill" / "linked", outside)
+    with pytest.raises(ValueError, match="junction"):
         migrate_codex_profile_sync(bundle, tmp_path / "out")
 
 

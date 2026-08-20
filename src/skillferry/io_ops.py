@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 from .models import SyncPlan, TargetApply
+from .paths import is_linklike
 from .secrets import redact_text
 from .state import backup_root, load_ledger, save_ledger, workspace_id
 
@@ -49,13 +50,15 @@ def _safe_target(path: Path, roots: list[Path]) -> None:
             continue
     else:
         raise ApplyError(f"target escapes every managed root: {path}")
+    if is_linklike(root):
+        raise ApplyError(f"managed root is a symlink or junction: {root}")
     current = root
     for part in relative.parts[:-1]:
         current = current / part
-        if current.is_symlink():
-            raise ApplyError(f"target parent is a symlink: {current}")
-    if path.is_symlink():
-        raise ApplyError(f"target is a symlink: {path}")
+        if is_linklike(current):
+            raise ApplyError(f"target parent is a symlink or junction: {current}")
+    if is_linklike(path):
+        raise ApplyError(f"target is a symlink or junction: {path}")
     if path.exists() and not path.is_file():
         raise ApplyError(f"target is not a regular file: {path}")
 

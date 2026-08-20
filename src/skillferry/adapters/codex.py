@@ -16,6 +16,7 @@ from typing import Any
 import tomlkit
 
 from ..models import Change, TextWrite
+from ..paths import is_linklike
 from ..workspace import Extension, ServerSpec
 from .base import Adapter, TargetEnv, mcp_entry_decision, mcp_removal_decision
 
@@ -46,8 +47,8 @@ class CodexAdapter(Adapter):
 
     def skill_dir(self, env: TargetEnv) -> Path:
         raw = env.home / ".agents" / "skills"
-        if raw.is_symlink():
-            raise ValueError(f"skills target may not be a symlink: {raw}")
+        if is_linklike(raw):
+            raise ValueError(f"skills target may not be a symlink or junction: {raw}")
         return raw.resolve()
 
     def rules_file(self, env: TargetEnv) -> Path:
@@ -103,7 +104,7 @@ class CodexAdapter(Adapter):
         env: TargetEnv = ctx.env
         target = env.codex_home / "config.toml"
         original = target.read_text(encoding="utf-8") if target.exists() else ""
-        if target.is_symlink() or (target.exists() and not target.is_file()):
+        if is_linklike(target) or (target.exists() and not target.is_file()):
             for server in servers:
                 ctx.conflict(
                     "mcp",

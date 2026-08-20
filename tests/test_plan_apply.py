@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from conftest import apply_workspace, make_workspace, plan_workspace
+from conftest import apply_workspace, make_junction, make_workspace, plan_workspace
 
 from skillferry.io_ops import ApplyError, apply_plan
 from skillferry.models import SyncPlan, TargetApply, TextWrite
@@ -362,6 +362,38 @@ def test_windows_plan_renders_windows_home(tmp_path, state_dir, fake_home):
     assert all(
         str(fake_home) in change.path for change in plan.changes
     )
+
+
+def test_windows_junction_managed_root_rejected(tmp_path, state_dir, fake_home):
+    ws = make_workspace(tmp_path)
+    outside = tmp_path / "outside-skills"
+    outside.mkdir()
+    agents = fake_home / ".agents"
+    agents.mkdir()
+    make_junction(agents / "skills", outside)
+    with pytest.raises(ValueError, match="junction"):
+        plan_workspace(ws, fake_home, requested_platform="windows", targets=("codex",))
+    assert list(outside.iterdir()) == []
+
+
+def test_windows_crlf_rules_and_dsh_patch_preserved(tmp_path, state_dir, fake_home):
+    ws = make_workspace(tmp_path)
+    paths = (
+        fake_home / ".codex" / "AGENTS.md",
+        fake_home / ".claude" / "CLAUDE.md",
+        fake_home / ".dsh" / "AGENTS.md",
+        fake_home / ".dsh" / "profiles" / "web" / "cordis.patch.yml",
+    )
+    for path in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"# existing\r\n")
+
+    apply_workspace(ws, fake_home, requested_platform="windows")
+
+    for path in paths:
+        rendered = path.read_bytes()
+        assert b"\r\n" in rendered
+        assert b"\n" not in rendered.replace(b"\r\n", b"")
 
 
 def test_claude_json_other_keys_preserved(tmp_path, state_dir, fake_home):

@@ -15,6 +15,7 @@ from pathlib import Path
 import tomlkit
 
 from .importers.base import copy_tree, empty_manifests, prepare_output
+from .paths import is_linklike
 from .secrets import looks_like_secret
 
 
@@ -118,8 +119,8 @@ def _write_registry(destination: Path, entries: dict[str, dict]) -> None:
 
 def migrate_codex_profile_sync(bundle: Path, output: Path) -> MigrationReport:
     bundle = bundle.expanduser().absolute()
-    if bundle.is_symlink():
-        raise ValueError(f"bundle may not be a symlink: {bundle}")
+    if is_linklike(bundle):
+        raise ValueError(f"bundle may not be a symlink or junction: {bundle}")
     bundle = bundle.resolve()
     data = _read_sync_toml(bundle)
     destination = prepare_output(output)

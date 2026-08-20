@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..models import GradeReport
+from ..paths import is_linklike
 from ..workspace import Extension, ServerSpec, Skill
 
 if TYPE_CHECKING:
@@ -39,8 +40,8 @@ def _pick(override: str | None, env_name: str, default: Path, label: str) -> Pat
         candidate = Path(os.environ[env_name]).expanduser()
     else:
         candidate = default
-    if candidate.is_symlink():
-        raise ValueError(f"{label} may not be a symlink: {candidate}")
+    if is_linklike(candidate):
+        raise ValueError(f"{label} may not be a symlink or junction: {candidate}")
     return candidate.resolve()
 
 

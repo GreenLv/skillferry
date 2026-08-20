@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models import Change, TextWrite
+from ..paths import is_linklike
 from ..workspace import Extension, ServerSpec
 from .base import Adapter, TargetEnv, mcp_entry_decision, mcp_removal_decision
 
@@ -44,8 +45,8 @@ class ClaudeAdapter(Adapter):
 
     def skill_dir(self, env: TargetEnv) -> Path:
         raw = env.claude_home / "skills"
-        if raw.is_symlink():
-            raise ValueError(f"skills target may not be a symlink: {raw}")
+        if is_linklike(raw):
+            raise ValueError(f"skills target may not be a symlink or junction: {raw}")
         return raw.resolve()
 
     def rules_file(self, env: TargetEnv) -> Path:
@@ -106,7 +107,7 @@ class ClaudeAdapter(Adapter):
 
         env: TargetEnv = ctx.env
         target = env.claude_home / ".claude.json"
-        if target.is_symlink() or (target.exists() and not target.is_file()):
+        if is_linklike(target) or (target.exists() and not target.is_file()):
             for server in servers:
                 ctx.conflict(
                     "mcp",

@@ -43,7 +43,19 @@ def normalize_text(text: str) -> str:
 def read_text(path: Path) -> str:
     if not path.exists():
         return ""
-    return path.read_text(encoding="utf-8")
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return handle.read()
+
+
+def preferred_newline(original: str, platform: str) -> str:
+    first_lf = original.find("\n")
+    if first_lf >= 0:
+        return "\r\n" if first_lf > 0 and original[first_lf - 1] == "\r" else "\n"
+    return "\r\n" if platform == "windows" else "\n"
+
+
+def with_newline(text: str, newline: str) -> str:
+    return normalize_text(text).replace("\n", newline)
 
 
 def parse_blocks(text: str) -> dict[str, BlockSpan]:
@@ -185,11 +197,14 @@ def _marker_merge(ctx: RenderContext, sources: dict[str, Path], *, include: bool
         }
     ctx.next_ledger["rules"] = next_state
 
-    if desired != original:
+    desired_native = with_newline(desired, preferred_newline(original, ctx.plan.platform))
+    if desired_native != original:
         label = "create" if not original else "update"
         ctx.plan.changes.append(Change("rules", ctx.target, "all", label, str(target_file)))
         ctx.apply.writes.append(
-            TextWrite(target=target_file, text=desired, mode=0o644, label="rules.md")
+            TextWrite(
+                target=target_file, text=desired_native, mode=0o644, label="rules.md"
+            )
         )
 
 
@@ -209,6 +224,7 @@ def _copy_merge(ctx: RenderContext, sources: dict[str, Path]) -> None:
             )
             continue
     desired = "\n\n".join(section for section in sections if section).rstrip("\n") + "\n"
+    desired = with_newline(desired, preferred_newline(original, ctx.plan.platform))
 
     previous = ctx.previous.get("rules", {})
     prior = previous.get("file_hash")

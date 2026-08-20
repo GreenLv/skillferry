@@ -46,10 +46,11 @@ restrictive permissions and redacted backups.
    (auth, history, sessions, sqlite, caches, embedded servers such as
    Codex's `node_repl`) are never managed; schema rejects mis-declarations
    (`tests/test_workspace.py`, `test_protected_mcp_server_never_managed`).
-7. **Path-based attacks.** Symlinks are rejected in workspaces, in target
-   parents, and at every write; absolute paths and `..` are rejected in the
-   schema; import and legacy migration reject symlinks before copying; apply
-   operations are confined to declared managed roots
+7. **Path-based attacks.** Symlinks and Windows junction/reparse points are
+   rejected in workspaces, in target parents, and at every write; absolute
+   paths and `..` are rejected in the schema; import and legacy migration
+   reject link-like paths before copying; apply operations are confined to
+   declared managed roots
    (`src/skillferry/io_ops.py`, `tests/test_plan_apply.py`).
 8. **Accidental publication of local overrides.** `workspace.local.toml` is
    gitignored, excluded from exports, and its filename is forbidden by

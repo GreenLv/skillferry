@@ -54,7 +54,9 @@ def test_doctor_exit_codes(tmp_path, state_dir, fake_home, monkeypatch):
     assert code == 0, output
     # local tamper -> conflict
     skill = fake_home / ".agents" / "skills" / "setup-skillferry" / "SKILL.md"
-    skill.write_text(skill.read_text() + "\n# tampered\n", encoding="utf-8")
+    skill.write_text(
+        skill.read_text(encoding="utf-8") + "\n# tampered\n", encoding="utf-8"
+    )
     code, _ = run(ws, fake_home, "doctor")
     assert code == 3
     # restore via overwrite
@@ -116,7 +118,9 @@ def test_adopt_only_apply_persists_ownership_ledger(tmp_path, state_dir, fake_ho
     code, _ = run(ws, fake_home, "apply", "--target", "codex", "--yes")
     assert code == 0
     skill = fake_home / ".agents" / "skills" / "setup-skillferry" / "SKILL.md"
-    skill.write_text(skill.read_text() + "\nlocal edit\n", encoding="utf-8")
+    skill.write_text(
+        skill.read_text(encoding="utf-8") + "\nlocal edit\n", encoding="utf-8"
+    )
     resolution = "skill:codex:setup-skillferry:SKILL.md=adopt"
     code, output = run(
         ws,

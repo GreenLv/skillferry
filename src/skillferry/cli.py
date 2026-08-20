@@ -23,6 +23,7 @@ from .importers.claude import import_claude
 from .importers.codex import import_codex
 from .io_ops import ApplyError, apply_plan
 from .migrate import migrate_codex_profile_sync
+from .paths import is_linklike
 from .planner import build_plan
 from .secrets import scan_text
 from .state import load_ledger
@@ -127,8 +128,8 @@ def _parser() -> argparse.ArgumentParser:
 
 def _init_workspace(path: Path) -> None:
     path = path.expanduser().absolute()
-    if path.is_symlink():
-        raise WorkspaceError(f"destination may not be a symlink: {path}")
+    if is_linklike(path):
+        raise WorkspaceError(f"destination may not be a symlink or junction: {path}")
     path = path.resolve()
     if path.exists() and any(path.iterdir()):
         raise WorkspaceError(f"destination is not empty: {path}")
@@ -245,8 +246,8 @@ def _export_shareable(workspace: Path, destination: Path, forbid: list[str]) -> 
                 continue
             if source.name.endswith((".sqlite", ".sqlite-shm", ".sqlite-wal")):
                 continue
-            if source.is_symlink():
-                findings.append(f"{relative}: symlinks are not exported")
+            if is_linklike(source):
+                findings.append(f"{relative}: symlinks and junctions are not exported")
                 continue
             if not source.is_file():
                 continue

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models import Change, FileCopy, FileDelete, GradeReport
+from ..paths import is_linklike
 from ..state import file_record
 from . import RenderContext, effective_targets
 
@@ -19,7 +20,7 @@ from . import RenderContext, effective_targets
 def _target_record(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
-    if path.is_symlink() or not path.is_file():
+    if is_linklike(path) or not path.is_file():
         return {"unsafe": True}
     return file_record(path)
 

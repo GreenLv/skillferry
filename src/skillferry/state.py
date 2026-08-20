@@ -19,6 +19,8 @@ from typing import Any
 
 from platformdirs import user_state_path
 
+from .paths import is_linklike
+
 STATE_SCHEMA = 1
 
 
@@ -61,8 +63,8 @@ def load_ledger(workspace_root: Path) -> dict[str, Any]:
     path = ledger_file(identifier)
     if not path.exists():
         return empty_ledger(workspace_root)
-    if path.is_symlink():
-        raise StateError(f"ledger may not be a symlink: {path}")
+    if is_linklike(path):
+        raise StateError(f"ledger may not be a symlink or junction: {path}")
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:

@@ -19,6 +19,7 @@ import tomlkit
 from tomlkit.items import Item
 
 from .models import SUPPORTED_PLATFORMS, SUPPORTED_TARGETS
+from .paths import is_linklike
 
 SCHEMA_VERSION = 1
 RULE_STRATEGIES = ("marker", "copy", "include")
@@ -91,19 +92,23 @@ def _safe_relative(root: Path, raw: str, label: str) -> Path:
     current = root
     for part in pure.parts:
         current = current / part
-        if current.is_symlink():
-            raise WorkspaceError(f"{label} may not traverse a symlink: {raw}")
+        if is_linklike(current):
+            raise WorkspaceError(
+                f"{label} may not traverse a symlink or junction: {raw}"
+            )
     return path
 
 
 def _no_symlinks_below(root: Path, label: str) -> None:
     if not root.exists():
         return
-    if root.is_symlink():
-        raise WorkspaceError(f"{label} may not be a symlink: {root}")
+    if is_linklike(root):
+        raise WorkspaceError(f"{label} may not be a symlink or junction: {root}")
     for entry in root.rglob("*"):
-        if entry.is_symlink():
-            raise WorkspaceError(f"{label} may not contain symlinks: {entry}")
+        if is_linklike(entry):
+            raise WorkspaceError(
+                f"{label} may not contain symlinks or junctions: {entry}"
+            )
 
 
 @dataclass(frozen=True)
@@ -178,8 +183,8 @@ def _deep_merge(
 def _load_document(path: Path, label: str) -> dict[str, Any]:
     if not path.exists():
         return {}
-    if path.is_symlink():
-        raise WorkspaceError(f"{label} may not be a symlink: {path}")
+    if is_linklike(path):
+        raise WorkspaceError(f"{label} may not be a symlink or junction: {path}")
     try:
         return _plain(tomlkit.parse(path.read_text(encoding="utf-8")))
     except (OSError, ValueError) as exc:
@@ -297,8 +302,8 @@ def load_workspace(
     if platform not in SUPPORTED_PLATFORMS:
         raise WorkspaceError(f"unsupported platform: {platform}")
     root = root.expanduser().absolute()
-    if root.is_symlink():
-        raise WorkspaceError(f"workspace root may not be a symlink: {root}")
+    if is_linklike(root):
+        raise WorkspaceError(f"workspace root may not be a symlink or junction: {root}")
     root = root.resolve()
     manifest = root / "workspace.toml"
     if not manifest.is_file():
@@ -607,8 +612,8 @@ def load_mcp_registry(ws: Workspace) -> dict[str, ServerSpec]:
                 f"mcp.registry file is missing but overlays declare servers: {registry}"
             )
         return {}
-    if registry.is_symlink():
-        raise WorkspaceError(f"mcp.registry may not be a symlink: {registry}")
+    if is_linklike(registry):
+        raise WorkspaceError(f"mcp.registry may not be a symlink or junction: {registry}")
     try:
         document = _plain(tomlkit.parse(registry.read_text(encoding="utf-8")))
     except (OSError, ValueError) as exc:
@@ -672,8 +677,10 @@ def load_extensions(ws: Workspace) -> dict[str, Extension]:
                 f"extensions.manifest is missing but overlays declare extensions: {manifest}"
             )
         return {}
-    if manifest.is_symlink():
-        raise WorkspaceError(f"extensions.manifest may not be a symlink: {manifest}")
+    if is_linklike(manifest):
+        raise WorkspaceError(
+            f"extensions.manifest may not be a symlink or junction: {manifest}"
+        )
     try:
         document = _plain(tomlkit.parse(manifest.read_text(encoding="utf-8")))
     except (OSError, ValueError) as exc:

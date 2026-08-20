@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +16,30 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 STARTER = REPO_ROOT / "examples" / "starter-workspace"
+
+
+def make_symlink_or_skip(link: Path, target: Path, *, target_is_directory: bool = False) -> None:
+    try:
+        link.symlink_to(target, target_is_directory=target_is_directory)
+    except OSError as exc:
+        if os.name == "nt" and exc.winerror == 1314:
+            pytest.skip("Windows account lacks SeCreateSymbolicLinkPrivilege")
+        raise
+
+
+def make_junction(link: Path, target: Path) -> None:
+    if os.name != "nt":
+        pytest.skip("NTFS junctions are Windows-only")
+    result = subprocess.run(
+        ["cmd.exe", "/d", "/c", "mklink", "/J", str(link), str(target)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert link.is_junction()
 
 
 @pytest.fixture()

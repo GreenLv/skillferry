@@ -127,7 +127,8 @@ replace wholesale and dicts deep-merge, every value's origin is visible to
 
 skillferry is deliberately a headless CLI. It is **not** a full-dotfiles
 synchronizer (it manages only declared, structured assets), it never creates
-symlinks (the schema rejects them), it ships no GUI, it does not switch API
+symlinks or Windows junction/reparse points (the schema rejects them), it ships
+no GUI, it does not switch API
 providers, sync sessions/history, or "losslessly convert any plugin". The
 honest comparison with the existing landscape, including what we can and
 cannot claim about competitors, is in

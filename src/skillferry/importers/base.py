@@ -8,10 +8,12 @@ skipped, and everything unrecognized is listed for human review.
 
 from __future__ import annotations
 
+import re
 import shutil
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from ..paths import is_linklike
 from ..secrets import scan_text
 
 CLASSIFICATIONS = ("PORTABLE", "LOCAL-ONLY", "SENSITIVE", "UNKNOWN")
@@ -38,6 +40,9 @@ RUNTIME_NAMES = (
 )
 SENSITIVE_NAMES = ("auth.json", ".credentials.json", "credentials.json", "history.jsonl")
 IGNORED_NAMES = {".DS_Store", "Thumbs.db", ".gitkeep"}
+RULE_MARKER_RE = re.compile(
+    r"<!--\s*(?:BEGIN|END)\s+SKILLFERRY\s+RULES\s+[A-Za-z0-9_.-]+\s*-->"
+)
 
 
 @dataclass(frozen=True)
@@ -63,10 +68,19 @@ class ImportReport:
         }
 
 
+def dematerialize_rules(text: str) -> str:
+    """Remove target-side ownership delimiters while preserving rule content."""
+
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = [line for line in normalized.splitlines() if not RULE_MARKER_RE.fullmatch(line.strip())]
+    rendered = "\n".join(lines).rstrip("\n")
+    return rendered + "\n" if rendered else ""
+
+
 def prepare_output(path: Path) -> Path:
     path = path.expanduser().absolute()
-    if path.is_symlink():
-        raise ValueError(f"destination may not be a symlink: {path}")
+    if is_linklike(path):
+        raise ValueError(f"destination may not be a symlink or junction: {path}")
     path = path.resolve()
     if path.exists() and any(path.iterdir()):
         raise ValueError(f"destination is not empty: {path}")
@@ -76,14 +90,14 @@ def prepare_output(path: Path) -> Path:
 
 def audit_tree(source: Path, *, label: str) -> list[str]:
     """Return sensitive-content findings and reject unsafe tree topology."""
-    if source.is_symlink():
-        raise ValueError(f"{label} may not be a symlink: {source}")
+    if is_linklike(source):
+        raise ValueError(f"{label} may not be a symlink or junction: {source}")
     findings: list[str] = []
     for entry in source.rglob("*"):
         if entry.name in IGNORED_NAMES:
             continue
-        if entry.is_symlink():
-            raise ValueError(f"{label} contains a symlink: {entry}")
+        if is_linklike(entry):
+            raise ValueError(f"{label} contains a symlink or junction: {entry}")
         if not entry.is_file():
             continue
         relative = entry.relative_to(source)
