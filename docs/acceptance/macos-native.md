@@ -1,11 +1,12 @@
 # macOS native acceptance evidence
 
-Status: **executed and passing** · Date: 2026-08-19 · Machine: macOS
-(aarch64) · Python 3.12 (local runs; CI matrix covers 3.11–3.13) ·
+Status: **executed and passing** · Historical rehearsal: 2026-08-19 · Native
+DSH supplement: 2026-08-20 · Machine: macOS (aarch64) · Python 3.12 ·
 skillferry 0.1.0 · Every path below is sanitized: `<HOME>` = the user home,
-`<TMP>` = the isolated rehearsal directory. No real agent configuration was
-modified by the rehearsal; the real-machine `plan` run is read-only by
-construction (`plan` performs zero writes).
+`<TMP>` = an isolated rehearsal directory. Sections 1–6 preserve the earlier
+read-only rehearsal; §8 records the current `ba501391a13723d318eab117da7b760b09c0edea`
+baseline and supersedes its old MCP process-startup coverage. No real Codex,
+Claude Code, or DSH configuration was an apply target.
 
 ## 0. Real-machine facts (probes, read-only)
 
@@ -148,3 +149,100 @@ test suite); no real agent configuration was modified during acceptance.
 matrix (3 OS × Python 3.11–3.13) with the public-tree audit, seed-skill
 parity check, workspace validation, wheel build, and installed-CLI version
 check.
+
+## 8. Native DSH process supplement (2026-08-20)
+
+Baseline: `ba501391a13723d318eab117da7b760b09c0edea` (`fix: validate DSH
+native startup`). The starter workspace was copied into `<TMP>/workspace`.
+The run set `HOME=<TMP>/fake-home`, `DSH_HOME=<TMP>/fake-dsh`, and
+`SKILLFERRY_STATE_DIR=<TMP>/state`; the npm cache and XDG config/cache/data
+directories were also isolated below `<TMP>`. No real agent directory was an
+apply target.
+
+### Isolated SkillFerry lifecycle
+
+| Operation | Result |
+| --- | --- |
+| `skillferry plan --platform auto` | exit 0; resolved `macos`, targets `codex`, `claude`, `dsh`; MCP `everything` rendered for all three targets |
+| `skillferry doctor` before apply | exit 2; expected safe drift in the empty fake homes |
+| `skillferry apply --yes` | exit 0; recoverable backup and ledger created below the isolated state directory |
+| `skillferry doctor` after apply | exit 0; `Changes: none` and no conflicts |
+| `dsh --version` | `0.1.0-rc.8` |
+
+The generated target files contained the exact reference server in all three
+shapes: Codex `[mcp_servers.everything]` with
+`@modelcontextprotocol/server-everything`, Claude
+`mcpServers.everything` with the same `npx` args, and DSH `mcp-everything` using
+`@deepseek-ai/dsh-mcp-client`, `serverName: everything`, and the same args.
+
+### DSH composed config and Web/MCP startup
+
+`dsh --profile web --dump-config` exited 0 and included:
+
+```text
+- id: mcp-everything
+  name: '@deepseek-ai/dsh-mcp-client'
+  config:
+    serverName: everything
+    args:
+      - '-y'
+      - '@modelcontextprotocol/server-everything'
+```
+
+The Web process was started with the isolated environment and
+`dsh --profile web --no-open --host 127.0.0.1 --port 41873`. The process-level
+evidence was:
+
+```text
+Starting default (STDIO) server...
+dsh web: http://127.0.0.1:41873
+HTTP root probe: 200
+```
+
+The running process tree contained the DSH Web process, its
+`npm exec @modelcontextprotocol/server-everything` child, and the resulting
+`mcp-server-everything` Node process. This verifies that the rendered MCP
+entry was loaded and started, rather than only appearing in a file. The first
+attempt inside the command sandbox correctly failed closed with
+`listen EPERM`; the same isolated command was rerun in system context because
+the sandbox forbids local socket listeners. This was an execution-environment
+restriction, not a SkillFerry or DSH configuration error.
+
+The DSH session was stopped with Ctrl-C. Post-stop checks confirmed the
+41873 listener was absent, the HTTP probe could not connect, and no process
+whose command or working tree belonged to this temporary DSH/MCP run
+remained. No LLM request was made; this supplement verifies composed config,
+MCP child startup, Web HTTP serving, and cleanup only.
+
+## 9. Repository gates (2026-08-20)
+
+Run from the same macOS checkout at the baseline above:
+
+```text
+/opt/anaconda3/bin/python -m pytest
+81 passed, 3 skipped
+
+/opt/anaconda3/bin/python -m ruff check .
+All checks passed!
+
+/opt/anaconda3/bin/python scripts/audit_public_tree.py .
+Public-tree audit passed
+
+/opt/anaconda3/bin/python scripts/check_seed_skills_parity.py
+Seed skill parity check passed.
+
+/opt/anaconda3/bin/python scripts/validate_workspace.py examples/starter-workspace
+[OK] workspace(codex/macos): 2 skill(s), 1 MCP server(s), 0 extension(s)
+[OK] workspace(claude/macos): 2 skill(s), 1 MCP server(s), 0 extension(s)
+[OK] workspace(dsh/macos): 2 skill(s), 1 MCP server(s), 0 extension(s)
+
+/opt/anaconda3/bin/python -m build --no-isolation
+Successfully built skillferry-0.1.0.tar.gz and
+skillferry-0.1.0-py3-none-any.whl
+```
+
+The three skips are the explicit Windows-only NTFS junction tests in
+`tests/conftest.py`; no macOS test failed. The build backend was unavailable
+in the base interpreter, so Hatchling was installed only into a temporary
+build-dependency directory and the build artifacts were emitted outside the
+repository. No tag, Release, or PyPI publication was performed.
