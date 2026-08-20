@@ -39,8 +39,9 @@
 
 **能写（证据锚点）：**
 
-- Codex 与 DSH 都原生发现 `~/.agents/skills/` —— 作者 macOS 验收已验证
-  （[acceptance/macos-native.md](../acceptance/macos-native.md)）。
+- Codex 与 DSH 都原生发现 `~/.agents/skills/` —— 作者的 macOS 与 Windows
+  验收记录均有演练（[macOS](../acceptance/macos-native.md)、
+  [Windows](../acceptance/windows-native.md)）。
 - workspace 格式目标中立；每个 Agent 只是渲染目标
   （[PORTABILITY_CONTRACT](PORTABILITY_CONTRACT.md)）。
 - 秘密引用由 schema 强制；`export --shareable` 永不展开它们；这是 CI 中

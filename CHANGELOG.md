@@ -1,60 +1,72 @@
 # Changelog
 
-All notable changes to skillferry are documented here, newest first.
+[简体中文](CHANGELOG.zh-CN.md)
+
+All notable public releases are documented here, newest first. Each version
+opens with its highest-impact changes, followed by implementation details and
+a compact validation note. `0.1.0` is the latest published release.
 
 ## Unreleased
 
+### Documentation
+
+- Reorganized the bilingual README around the product problem, core promises,
+  release status, and evidence boundaries.
+- Added a Chinese changelog and synchronized the documentation index,
+  portability matrix, comparison, threat model, and release record.
+- Kept the current documentation follow-up separate from the already-published
+  `v0.1.0` tag; no runtime behavior changes are included here.
+
 ## 0.1.0 — 2026-08-20
 
-First release: the portable agent-workspace core (roadmap stage A).
+First public release of the portable agent-workspace core (roadmap stage A).
 
-### Added
+### Highlights
 
-- `workspace.toml` schema v1: skills, instructions (marker/copy/include),
-  MCP registry (secret-reference-only env), extension manifest, orthogonal
-  overlays (`base < target < platform < host < local`), `[protect]`
-  declarations, with schema-level rejection of literal secrets, path
-  traversal, symlinks, and protect mis-declarations.
-- Adapters for Codex, Claude Code, and DeepSeek Harness with
-  evidence-backed portability grades
-  (`native / translated / degraded / manual / unsupported`).
-- CLI: `init`, `import --from codex|claude`
-  (PORTABLE / LOCAL-ONLY / SENSITIVE / UNKNOWN classification),
-  `plan`, `apply` (with `--resolve id=adopt|overwrite|keep-local`),
-  `doctor` (exit codes 0/1/2/3), `status`, `export --shareable`,
+- A target-neutral `workspace.toml` describes skills, global instructions, MCP
+  templates, extensions, overlays, and protected paths once; adapters render
+  it for Codex, Claude Code, and DeepSeek Harness.
+- `plan` reports evidence-backed `native`, `translated`, `degraded`, `manual`,
+  or `unsupported` grades instead of treating every target as lossless.
+- Secret references stay in the workspace while resolved values remain local;
+  `export --shareable` refuses credential-shaped content and never expands a
+  reference.
+- Hash-based ownership, explicit conflict resolution, backups, redacted views,
+  and per-target rollback prevent silent overwrites.
+
+### Changes
+
+- Added schema v1 validation for skills, instructions (`marker`/`copy`/`include`),
+  MCP registries, extension manifests, orthogonal overlays
+  (`base < target < platform < host < local`), and `[protect]` declarations.
+  Literal secrets, path traversal, symlinks, Windows junctions/reparse points,
+  opaque binaries, and protected-state mis-declarations are rejected.
+- Added the CLI workflow: `init`, `import --from codex|claude`, `plan`, `apply`,
+  `doctor`, `status`, `export --shareable`, and
   `migrate --from codex-profile-sync`.
-- Hash-based ownership ledger: create/update/adopt/delete semantics,
-  source-change vs local-edit distinction, conflict blocking, per-target
-  rollback, raw + redacted backups.
-- Seed skills `setup-skillferry` and `release-checklist`, and the runnable
-  `examples/starter-workspace` (parity-checked in CI).
-- Public-tree auditor (`scripts/audit_public_tree.py`) and workspace
-  validator (`scripts/validate_workspace.py`).
-- Test suite (68 tests) and CI matrix: 3 OS × Python 3.11–3.13 plus a
-  release workflow.
-- Documentation: bilingual README, THREAT_MODEL, AGENT_MATRIX,
-  PORTABILITY_CONTRACT, COMPARISON, MIGRATION, and the macOS native
-  acceptance record.
+- Added Codex, Claude Code, and DeepSeek Harness adapters, the
+  `setup-skillferry` and `release-checklist` seed skills, and the runnable
+  `examples/starter-workspace`.
+- Added the public-tree auditor, workspace validator, bilingual README and
+  core-document translations, portability contract, threat model, capability
+  matrix, comparison, migration guide, and platform acceptance records.
+- Hardened multiline secret scanning, imported-skill inspection, legacy
+  migration, rollback of partial writes, redacted backup generation, and
+  source-change versus local-edit reconciliation.
+- Pinned `hatchling<1.32` so distributions retain `Metadata-Version: 2.4`,
+  which passes the release toolchain's `twine check --strict` gate.
 
-### Docs
+### Validation
 
-- Added a documentation index for the `docs/` tree
-  ([docs/README.md](docs/README.md)) and Chinese translations of the core
-  documents ([docs/zh-CN/](docs/zh-CN/), `CONTRIBUTING.zh-CN.md`,
-  `SECURITY.zh-CN.md`).
-- READMEs gained tables of contents, a grade glossary, and a documentation
-  map; the Chinese README was resynced with the English one.
-
-### Fixed
-
-- Hardened multiline secret scanning, imported-skill inspection, opaque-binary
-  rejection, and legacy migration against symlink traversal.
-- Made rollback restore partial writes in the failing target group and preserve
-  deleted files, with redacted views generated from the actual backup bytes.
-- Persisted ledger-only `adopt` / `keep-local` resolutions.
-- Reconciled whole-skill and MCP-server removals across Codex, Claude Code, and
-  DeepSeek Harness without deleting locally modified owned content silently.
-- Expanded the regression suite from 68 to 79 tests.
-- Pinned the build backend to `hatchling<1.32` so distributions keep
-  `Metadata-Version: 2.4`, which passes `twine check --strict` (hatchling
-  1.32+ emits 2.5, rejected by twine 6.2 / packaging 26.x).
+- The release commit is `a78bf54d042ce1cf7eb16a056237fd32bb56d238`, targeted by
+  annotated tag `v0.1.0`.
+- The release gate passed 81 tests with 3 platform-conditioned skips, Ruff,
+  the public-tree audit, seed-skill parity, starter-workspace validation,
+  wheel/sdist build, and strict package metadata checks.
+- Independent native acceptance passed on macOS and Windows. The Windows
+  record separately documents two privileged symlink skips, Claude Code not
+  being installed, DSH launcher behavior, and Windows ACL limits; those facts
+  are not collapsed into a generic compatibility claim.
+- GitHub Release `v0.1.0` and PyPI `skillferry==0.1.0` were published. A fresh
+  PyPI install reported `skillferry --version` as `0.1.0`. Full publication
+  readback is in [the release acceptance record](docs/acceptance/release-0.1.0.md).

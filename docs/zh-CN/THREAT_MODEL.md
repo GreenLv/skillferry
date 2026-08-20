@@ -58,8 +58,8 @@ skillferry 搬运的是**能力定义**——从不搬运秘密，从不搬运�
   保留它不管理的每个键，但会用规范化格式重写该文件（等级备注中如实说明；
   `tests` 断言其他键存活）。备份 + 脱敏副本覆盖恢复。
 - **Windows ACL 语义。** POSIX 模式位不能映射到 Windows；在 Windows 上，
-  秘密以默认 ACL 落入配置文件。Windows 原生验收单独跟踪
-  （[docs/acceptance/windows-native.md](../acceptance/windows-native.md)），
+  秘密以默认 ACL 落入配置文件。Windows 原生验收已通过，但该限制在单独记录中
+  明确说明（[docs/acceptance/windows-native.md](../acceptance/windows-native.md)），
   不能从 macOS 或 CI 结果推断。
 
 ## 范围外

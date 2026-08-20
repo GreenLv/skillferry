@@ -1,64 +1,101 @@
 # Release 0.1.0 acceptance evidence
 
-Status: **released and published** ·
-Date: 2026-08-20 · Version: 0.1.0 · Tag: `v0.1.0` ·
-Commit: `a78bf54d042ce1cf7eb16a056237fd32bb56d238` ·
-Platform: macOS (aarch64) · Python 3.12.2
+Status: **published on GitHub and PyPI** · Date: 2026-08-20 ·
+Version: `0.1.0`
 
-Release checklist (seed skill `release-checklist`) outcome, gate by gate.
+This record applies the repository's `release-checklist` seed skill and keeps
+release identity, validation, publication, and evidence limitations separate.
+The exact published source is the immutable tag target below. This file and
+other documentation may receive follow-up commits on `main`; those commits do
+not change the already-published artifact.
 
-## 1. Tests
+## Release identity
 
-`python3 -m pytest` → `81 passed, 3 skipped` (exit 0). The skips are
-platform-conditioned junction/startup cases, not environment-detection
-fallbacks.
+| Field | Recorded value |
+| --- | --- |
+| GitHub Release | [`skillferry 0.1.0`](https://github.com/GreenLv/skillferry/releases/tag/v0.1.0), published and not draft/prerelease |
+| Tag | Annotated `v0.1.0` |
+| Release commit | `a78bf54d042ce1cf7eb16a056237fd32bb56d238` |
+| Package | [`skillferry==0.1.0`](https://pypi.org/project/skillferry/0.1.0/) |
+| Native evidence | [macOS](macos-native.md) and [Windows](windows-native.md) |
 
-## 2. Public-tree audit
+## What was released
 
-`python3 scripts/audit_public_tree.py .` → passed on the release tree.
-`python3 scripts/check_seed_skills_parity.py` → passed.
-`python3 scripts/validate_workspace.py examples/starter-workspace` → all
-three targets (codex/claude/dsh) OK.
+The release is the portable agent-workspace core: a versioned `workspace.toml`,
+Codex/Claude Code/DeepSeek Harness adapters, explicit portability grades,
+secret-reference-only MCP templates, ownership/conflict tracking, reversible
+apply, import/export/migrate, and the security/public-tree gates described in
+the [changelog](../../CHANGELOG.md).
 
-## 3. Changelog
+## Validation gates
 
-The docs-only `Unreleased` entries were folded into `0.1.0 — 2026-08-20`
-before tagging; no user-visible change was left uncategorized.
+### Source and package gates
 
-## 4. Version
+- `/opt/anaconda3/bin/python -m pytest` → `81 passed, 3 skipped` (exit 0).
+  The skips were platform-conditioned junction/startup cases, not
+  environment-detection fallbacks.
+- Ruff, the public-tree audit, seed-skill parity, and
+  `examples/starter-workspace` validation passed for all three rendered targets.
+- `pyproject.toml`, `src/skillferry/__init__.py`, CLI output, and a fresh wheel
+  install all reported `0.1.0`.
+- A clean build produced
+  `skillferry-0.1.0-py3-none-any.whl` and `skillferry-0.1.0.tar.gz`; strict
+  `twine check` passed for both.
+- The [release-commit CI run](https://github.com/GreenLv/skillferry/actions/runs/32382714062)
+  passed on Ubuntu, macOS, and Windows with Python 3.11, 3.12, and 3.13.
+  This is automated source/shape evidence, not native platform acceptance.
 
-Single source of truth `pyproject.toml` = `src/skillferry/__init__.py` =
-CLI output = `0.1.0` (fresh-venv wheel install verified both the console
-script and the module).
+The build backend is pinned to `hatchling>=1.25,<1.32`: Hatchling 1.32+
+emits `Metadata-Version: 2.5`, which the release toolchain's twine 6.2.0 /
+packaging 26.x rejects. The accepted boundary is Hatchling 1.31.0 → metadata
+2.4 and 1.32.0 → metadata 2.5.
 
-## 5. Artifacts
+### Native platform gates
 
-Built from a clean tree: `python3 -m build` →
-`skillferry-0.1.0-py3-none-any.whl` + `skillferry-0.1.0.tar.gz`.
-`twine check --strict` (twine 6.2.0): both PASSED.
-Fresh venv install of the wheel: `skillferry --version` → `0.1.0`.
+- **macOS:** the isolated import → plan → apply → doctor → export lifecycle,
+  real target-path read-only planning, rollback/conflict drills, DSH composed
+  config, MCP child startup, and Web HTTP probe passed. No real agent home was
+  an apply target; see [macOS native acceptance](macos-native.md).
+- **Windows:** the native user-session lifecycle, CRLF preservation, Unicode
+  and space-containing paths, NTFS junction refusal, rollback, DSH config and
+  process loading passed. The final source run reported 82 passed and 2
+  explicit privileged symlink skips; see [Windows native acceptance](windows-native.md).
 
-Build-backend pin: hatchling 1.32+ emits `Metadata-Version: 2.5`, which the
-repo's pinned twine 6.2.0 (packaging 26.x) rejects; `pyproject.toml` now
-requires `hatchling>=1.25,<1.32` so distributions stay on `Metadata-Version:
-2.4` (verified boundary: 1.31.0 → 2.4, 1.32.0 → 2.5).
+Native records are independent of the GitHub Actions matrix. CI is automated
+source/shape evidence and does not substitute for either native run.
 
-## 6. Rollback
+## Publication readback
 
-First release: no previous PyPI artifact to restore. Revert path = delete
-the GitHub release, delete tag `v0.1.0`, and the project is unpublished.
+- Workflow run [`32382725301`](https://github.com/GreenLv/skillferry/actions/runs/32382725301)
+  built and inspected the wheel/sdist, and its final `Publish to PyPI` job
+  succeeded.
+- The first PyPI attempt returned `invalid-publisher`. After the owner added
+  the trusted publisher for `GreenLv/skillferry`, `release.yml`, environment
+  `pypi`, the failed job was rerun and succeeded. This was an account/workflow
+  configuration step, not a change to the release contents.
+- PyPI readback returned HTTP 200 for version `0.1.0`, with wheel and sdist
+  present and neither yanked. An independent fresh environment installed
+  `skillferry==0.1.0` and reported `skillferry --version` → `0.1.0`.
+- The remote annotated tag was read back and resolves to the release commit
+  above; the GitHub Release is non-draft and non-prerelease.
 
-## 7. Post-release verification
+## Evidence boundaries and limitations
 
-- GitHub release `skillferry 0.1.0` published (not draft, not prerelease)
-  at tag `v0.1.0` → commit `a78bf54…`; remote tag verified via
-  `git ls-remote --tags origin`.
-- Workflow run 32382725301: `Build and inspect distributions` succeeded
-  (artifact `python-package-distributions`, 163 271 bytes).
-- First `Publish to PyPI` attempt failed with `invalid-publisher`; after
-  the owner added the PyPI trusted publisher (`GreenLv/skillferry`,
-  `release.yml`, environment `pypi`), the job was re-run and succeeded.
-- PyPI readback: `https://pypi.org/pypi/skillferry/json` → HTTP 200,
-  version `0.1.0`, wheel + sdist, neither yanked (uploaded 2026-08-20).
-- Independent install: fresh venv `pip install skillferry==0.1.0` from
-  PyPI → `skillferry --version` → `0.1.0`.
+- The Windows acceptance record does not claim a native Claude Code process
+  run because Claude Code was not installed on that machine; its on-disk
+  rendered shape was inspected.
+- Windows ACL confidentiality remains dependent on the selected agent-home
+  ACL. skillferry does not replace the operating system's ACL policy or act as
+  a secret manager.
+- Two privileged Windows symbolic-link tests were skipped explicitly; NTFS
+  junction coverage passed without elevation.
+- The release tag is the source-of-truth for the published package. Later
+  documentation commits on `main` are evidence follow-ups, not retroactive
+  changes to `v0.1.0`.
+
+## Rollback
+
+This was the first PyPI artifact, so there was no previous package to restore.
+The publication rollback would be to remove the GitHub Release and `v0.1.0`
+tag, then withdraw the `0.1.0` PyPI distributions according to PyPI's
+maintainer process.

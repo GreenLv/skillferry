@@ -4,15 +4,16 @@
 绝不为未测试的行为声称 `native`。** 证据来源：(E1) 作者本人的 macOS 原生
 验收（[acceptance/macos-native.md](../acceptance/macos-native.md)）、(E2)
 作者已发布的 codex-profile-sync 引擎与 codex-sync 脚本、(E3) 官方产品文档
-（下文链接）、(E4) CI 测试套件（形状断言，非产品行为）。
+（下文链接）、(E4) CI 测试套件（形状断言，非产品行为），以及 (E5) 独立的
+Windows 原生验收记录（[acceptance/windows-native.md](../acceptance/windows-native.md)）。
 
 ## 加载路径（各资产落在哪里）
 
 | 目标 | Skills | 全局规则 | MCP（stdio） |
 | --- | --- | --- | --- |
-| Codex | `~/.agents/skills/<name>/`（E1：与 DSH 共享，自动发现） | `~/.codex/AGENTS.md`，标记块分隔（E2：与作者的 `manage-global-agents.py` 同机制） | `~/.codex/config.toml` `[mcp_servers.<name>]` command/args/env（E2/E3：Codex 配置格式） |
+| Codex | `~/.agents/skills/<name>/`（E1/E5：与 DSH 共享，自动发现） | `~/.codex/AGENTS.md`，标记块分隔（E2：与作者的 `manage-global-agents.py` 同机制） | `~/.codex/config.toml` `[mcp_servers.<name>]` command/args/env（E2/E3：Codex 配置格式） |
 | Claude Code | `~/.claude/skills/<name>/`（E3：[个人 skills 文档](https://code.claude.com/docs/en/skills)） | `~/.claude/CLAUDE.md`，标记块原样渲染（E3：CLAUDE.md 是纯 markdown；Claude 没有受管块概念） | 用户级 `~/.claude.json` `mcpServers`（E3：[MCP 文档](https://code.claude.com/docs/en/mcp)——用户级服务器存储在 `~/.claude.json`）；项目级 `.mcp.json` 不在 v1 管理范围 |
-| DSH | `~/.agents/skills/<name>/`（E1：原生自动加载，已验证） | `$DSH_HOME/AGENTS.md`，标记块（E2：`manage-global-agents.py` 的 dsh 目标） | `$DSH_HOME/profiles/<profile>/cordis.patch.yml`，`dsh-mcp-client` 插入条目（E2：`apply-dsh-mcp.py`；E1：真实 profile 已验证） |
+| DSH | `~/.agents/skills/<name>/`（E1/E5：原生自动加载，已验证） | `$DSH_HOME/AGENTS.md`，标记块（E2：`manage-global-agents.py` 的 dsh 目标） | `$DSH_HOME/profiles/<profile>/cordis.patch.yml`，`dsh-mcp-client` 插入条目（E2：`apply-dsh-mcp.py`；E1/E5：真实 profile 已验证） |
 
 ## 等级推导
 
@@ -57,9 +58,9 @@ v1 中所有目标都是 `manual`。skillferry 声明期望状态（来源 + 固
   `degraded`。
 - **"任意 http/sse MCP 服务器可自动配置"** —— v1 只渲染 `stdio`；其余一律
   `manual` 并打印按目标说明。
-- **Windows 上的原生证据** —— 待 Windows 原生验收；见
-  [acceptance/windows-native.md](../acceptance/windows-native.md)。CI 在
-  `windows-latest` 上绿只是自动化形状证据，不是原生验收。
+- **Windows 上的原生证据** —— 独立 Windows 验收记录已通过 v1 生命周期与
+  DSH 进程检查，明确的跳过项和限制见该记录。`windows-latest` 上的 CI 变绿
+  仍只是自动化形状证据，不能替代原生记录。
 
 ## 如何修改一个等级
 

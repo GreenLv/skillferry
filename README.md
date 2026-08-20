@@ -1,5 +1,12 @@
 # skillferry
 
+[![CI](https://github.com/GreenLv/skillferry/actions/workflows/ci.yml/badge.svg)](https://github.com/GreenLv/skillferry/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/GreenLv/skillferry)](https://github.com/GreenLv/skillferry/releases)
+[![PyPI](https://img.shields.io/pypi/v/skillferry)](https://pypi.org/project/skillferry/)
+[![License](https://img.shields.io/github/license/GreenLv/skillferry)](LICENSE)
+
+[简体中文](README.zh-CN.md)
+
 **Your agent workflow, portable across tools and machines.**
 
 skillferry turns one versioned, Git-friendly workspace — skills, global
@@ -11,20 +18,51 @@ tells you honestly, per asset, how portable that asset is.
 > Sync capabilities, not credentials. · Write skills once. Run them across
 > agents. · Your agent capabilities should not be locked inside one client.
 
-## Table of contents
+> Release status: `0.1.0` is the latest published release on GitHub and PyPI.
+> Native macOS and Windows acceptance are recorded independently; the CI
+> matrix is a separate automated gate. See the
+> [release acceptance record](docs/acceptance/release-0.1.0.md),
+> [compatibility matrix](docs/AGENT_MATRIX.md), and
+> [changelog](CHANGELOG.md).
 
-- [30-second demo](#30-second-demo)
-- [Before / after](#before--after)
-- [Quick start](#quick-start)
-- [Compatibility matrix](#compatibility-matrix)
-- [Security boundary](#security-boundary)
-- [Workspace layout](#workspace-layout)
-- [Not a dotfiles / symlink / GUI tool](#not-a-dotfiles--symlink--gui-tool)
-- [Adapter development](#adapter-development)
-- [Migrating from codex-profile-sync](#migrating-from-codex-profile-sync)
-- [Documentation map](#documentation-map)
-- [Roadmap](#roadmap)
-- [License](#license)
+## Start here
+
+| If you want to... | Read... |
+| --- | --- |
+| understand the problem and value | [Why skillferry exists](#why-skillferry-exists) and [Core promises](#core-promises) |
+| see the workflow at a glance | [30-second demo](#30-second-demo) |
+| install and try it | [Quick start](#quick-start) |
+| inspect portability and loss boundaries | [Compatibility matrix](#compatibility-matrix) and [PORTABILITY_CONTRACT](docs/PORTABILITY_CONTRACT.md) |
+| review security and ownership | [Security boundary](#security-boundary) and [THREAT_MODEL](docs/THREAT_MODEL.md) |
+| inspect release and platform evidence | [Release acceptance](docs/acceptance/release-0.1.0.md) and [acceptance records](docs/README.md) |
+
+## Why skillferry exists
+
+Agent capabilities are easy to accumulate and hard to move safely. Skills live
+in different directories, global instructions use different conventions, MCP
+configuration shapes diverge, and the convenient way to copy a connection often
+copies its credential too.
+
+skillferry keeps four boundaries explicit:
+
+1. The versioned workspace is the source of truth; rendered agent files are
+   outputs.
+2. Each adapter reports what it can actually load, using a portability grade
+   rather than a blanket compatibility claim.
+3. Secret references may cross the workspace boundary, but resolved values stay
+   on the local machine.
+4. The ownership ledger turns local edits and generated changes into visible
+   conflicts instead of silent overwrites.
+
+## Core promises
+
+| Priority | Promise | What it means in practice |
+| --- | --- | --- |
+| 1 | **One workspace, several targets** | `workspace.toml` and declared assets are rendered to Codex, Claude Code, and DSH-specific shapes. |
+| 2 | **Portability is graded** | `native`, `translated`, `degraded`, `manual`, and `unsupported` describe loading behavior and known loss. |
+| 3 | **Secrets never move** | Workspaces contain `secret:env/...` or `secret:file/...` references; only local target config receives a resolved value. |
+| 4 | **Apply is reversible and conflict-aware** | Hashes, backups, redacted views, rollback, and explicit `--resolve` choices protect hand-edited files. |
+| 5 | **The boundary is part of the product** | Sessions, memories, auth state, arbitrary plugins, and unsupported transports remain outside v1 instead of being implied as portable. |
 
 ## 30-second demo
 
@@ -49,8 +87,10 @@ Exported 15 file(s). No secret references were expanded.
 The five-beat flow — import, secret references, per-target grades, apply,
 secret-free export — is rehearsed in CI by the test suite (see
 `tests/test_plan_apply.py`, `tests/test_importers.py`,
-`tests/test_export_audit.py`) and was accepted natively on macOS in
-[docs/acceptance/macos-native.md](docs/acceptance/macos-native.md).
+`tests/test_export_audit.py`). It was also exercised independently on native
+macOS and Windows; the detailed records are
+[macOS](docs/acceptance/macos-native.md) and
+[Windows](docs/acceptance/windows-native.md).
 
 ## Before / after
 
@@ -67,13 +107,17 @@ most-requested fixes in the official trackers ([claude-code #36693](https://gith
 ## Quick start
 
 ```console
-$ pipx install skillferry
+$ pipx install skillferry==0.1.0
 $ skillferry init my-workspace && cd my-workspace
 # add skills/**, edit instructions/global.md and mcp/servers.toml
 $ skillferry plan          # read every grade and conflict first
 $ skillferry apply         # backs up, writes only owned paths
 $ skillferry doctor        # exit 0 = in sync
 ```
+
+For a floating install, omit the version pin. The published `0.1.0` package is
+the current release and the exact release identity is recorded in
+[docs/acceptance/release-0.1.0.md](docs/acceptance/release-0.1.0.md).
 
 `plan` and `apply` are dry-run-safe by design: `plan` never writes, and
 `apply` refuses to run when any conflict exists. Exit codes: `0` in sync,
@@ -185,15 +229,16 @@ your role, start with:
 | Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) + [docs/AGENT_MATRIX.md](docs/AGENT_MATRIX.md) |
 | Comparing alternatives | [docs/COMPARISON.md](docs/COMPARISON.md) |
 | Legacy migration | [docs/MIGRATION.md](docs/MIGRATION.md) |
-| Evidence records | [docs/acceptance/macos-native.md](docs/acceptance/macos-native.md) · [docs/acceptance/windows-native.md](docs/acceptance/windows-native.md) |
+| Release and platform evidence | [docs/acceptance/release-0.1.0.md](docs/acceptance/release-0.1.0.md) · [docs/acceptance/macos-native.md](docs/acceptance/macos-native.md) · [docs/acceptance/windows-native.md](docs/acceptance/windows-native.md) |
 
 Chinese translations: [README.zh-CN.md](README.zh-CN.md) is the entry point,
-core documents live in [docs/zh-CN/](docs/zh-CN/). Release history:
-[CHANGELOG.md](CHANGELOG.md).
+core documents live in [docs/zh-CN/](docs/zh-CN/), and the Chinese release
+history is [CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md). The English release
+history is [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap
 
-- **A (this release)**: the portable core — skills/rules/MCP rendering,
+- **A (0.1.0)**: the portable core — skills/rules/MCP rendering,
   grades, ownership ledger, import/export/migrate, CI on 3 OS × Python 3.11–3.13.
 - **B**: Gemini CLI adapter (first v1.x target), `lockfile`/provenance records.
 - **C**: team layer (`scope/team` overlays), SSH/remote targets.

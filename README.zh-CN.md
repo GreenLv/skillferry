@@ -1,5 +1,12 @@
 # skillferry
 
+[![CI](https://github.com/GreenLv/skillferry/actions/workflows/ci.yml/badge.svg)](https://github.com/GreenLv/skillferry/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/GreenLv/skillferry)](https://github.com/GreenLv/skillferry/releases)
+[![PyPI](https://img.shields.io/pypi/v/skillferry)](https://pypi.org/project/skillferry/)
+[![License](https://img.shields.io/github/license/GreenLv/skillferry)](LICENSE)
+
+[English](README.md)
+
 **你的 Agent 工作流，跨工具、跨机器可移植。**
 
 skillferry 把一份可版本化、可提交 Git 的 workspace 定义——Skills、全局指令、
@@ -10,20 +17,44 @@ skillferry 把一份可版本化、可提交 Git 的 workspace 定义——Skill
 > 同步能力，不复制秘密。· 写一次 Skill，到处可跑。· 你的 Agent 能力资产，
 > 不该锁在某个客户端里。
 
-## 目录
+> 发布状态：`0.1.0` 是当前在 GitHub 与 PyPI 上正式发布的版本。macOS 与
+> Windows 原生验收分别记录；CI 矩阵是独立的自动化门禁。详见
+> [0.1.0 发布验收记录](docs/acceptance/release-0.1.0.md)、
+> [适配器能力矩阵](docs/zh-CN/AGENT_MATRIX.md) 和
+> [更新日志](CHANGELOG.zh-CN.md)。
 
-- [30 秒演示](#30-秒演示)
-- [Before / After](#before--after)
-- [三步开始](#三步开始)
-- [兼容性矩阵](#兼容性矩阵)
-- [安全边界](#安全边界)
-- [Workspace 布局](#workspace-布局)
-- [不是什么](#不是什么)
-- [适配器开发](#适配器开发)
-- [从 codex-profile-sync 迁移](#从-codex-profile-sync-迁移)
-- [文档地图](#文档地图)
-- [路线图](#路线图)
-- [许可](#许可)
+## 从这里开始
+
+| 如果你想…… | 建议阅读 |
+| --- | --- |
+| 先理解它解决什么问题 | [为什么需要 skillferry](#为什么需要-skillferry) 和 [核心承诺](#核心承诺) |
+| 快速了解工作流程 | [30 秒演示](#30-秒演示) |
+| 安装并亲自试用 | [快速开始](#快速开始) |
+| 查看可移植性和损失边界 | [兼容性矩阵](#兼容性矩阵) 与 [可移植性契约](docs/zh-CN/PORTABILITY_CONTRACT.md) |
+| 查看安全与所有权边界 | [安全边界](#安全边界) 与 [安全威胁模型](docs/zh-CN/THREAT_MODEL.md) |
+| 查看发布和平台证据 | [发布验收](docs/acceptance/release-0.1.0.md) 与 [文档索引](docs/zh-CN/README.md) |
+
+## 为什么需要 skillferry
+
+Agent 能力很容易积累，却很难安全迁移：Skills 分散在不同目录，全局指令使用
+不同约定，MCP 配置形状彼此不兼容，而最方便的复制方式往往也会把凭据一起复制。
+
+skillferry 把四条边界明确写进工作流：
+
+1. 版本化 workspace 是事实源，Agent 配置只是渲染结果。
+2. 每个适配器都必须说明自己实际能加载什么，用可移植性等级代替笼统的兼容声明。
+3. Secret 引用可以跨 workspace 边界传播，但解析后的值只留在本机。
+4. 所有权账本把本地编辑与生成变更变成可见冲突，而不是静默覆盖。
+
+## 核心承诺
+
+| 优先级 | 承诺 | 实际含义 |
+| --- | --- | --- |
+| 1 | **一份 workspace，多种目标** | `workspace.toml` 与显式声明的资产渲染成 Codex、Claude Code、DSH 各自的配置形状。 |
+| 2 | **可移植性分级** | `native`、`translated`、`degraded`、`manual`、`unsupported` 说明加载行为与已知损失。 |
+| 3 | **秘密不迁移** | workspace 只保存 `secret:env/...` 或 `secret:file/...` 引用，解析后的值只进入本机目标配置。 |
+| 4 | **应用可回滚且尊重冲突** | 哈希、备份、脱敏副本、回滚和显式 `--resolve` 保护手工编辑的文件。 |
+| 5 | **边界也是产品的一部分** | 会话、记忆、认证状态、任意插件和不支持的传输方式留在 v1 范围之外，不暗示它们可以无损迁移。 |
 
 ## 30 秒演示
 
@@ -46,10 +77,11 @@ $ skillferry export --shareable ~/workspaces/public           # 证明：公共�
 
 五拍流程（导入 → Secret 引用 → 分级 → 应用 → 无秘密导出）由测试套件在 CI
 中持续演练（`tests/test_plan_apply.py`、`tests/test_importers.py`、
-`tests/test_export_audit.py`），并在 macOS 上完成原生验收，证据见
-[docs/acceptance/macos-native.md](docs/acceptance/macos-native.md)。
+`tests/test_export_audit.py`），并分别在 macOS 与 Windows 原生环境中演练；
+详细记录见 [macOS](docs/acceptance/macos-native.md) 与
+[Windows](docs/acceptance/windows-native.md)。
 
-## Before / After
+## 前后对比
 
 | Before | After |
 | --- | --- |
@@ -58,21 +90,18 @@ $ skillferry export --shareable ~/workspaces/public           # 证明：公共�
 | 只报"同步成功"，不知道丢失了什么 | `plan` 对每项资产输出 `native / translated / degraded / manual / unsupported` 与损失说明 |
 | 同步工具悄悄覆盖手改内容 | 逐路径哈希账本：本地改动变成冲突（exit 3），绝不静默覆盖 |
 
-真实需求证据：跨机器丢失 Skills/配置是官方 issue 中呼声最高的需求之一
-（[claude-code #36693](https://github.com/anthropics/claude-code/issues/36693)、[#69231](https://github.com/anthropics/claude-code/issues/69231)、
+真实需求证据：跨机器丢失 Skills/配置是官方 issue 中反复出现的需求
+（[claude-code #36693](https://github.com/anthropics/claude-code/issues/36693)、
+[#69231](https://github.com/anthropics/claude-code/issues/69231)、
 [codex #26691](https://github.com/openai/codex/issues/26691)），MCP 客户端配置
-分裂是开放的标准痛点（[SEP-2633](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2633)、
+分裂也是开放的标准化痛点（[SEP-2633](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2633)、
 [MCP IG #2761](https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/2761)）。
-中文社区原声同样直接：「公司电脑配置好的 Prompt 和 Skills，回家换台电脑就得
-重新弄」（[V2EX](https://global.v2ex.co/t/1195876)）；「写个 shell 脚本，把
-配置文件打包传到自己的私人仓库……密钥那部分记得先摘出去」
-（[CocoLoop](https://www.cocoloop.cn/t/topic/13490)）——陌生用户已经在手搓
-本工具的架构。
+这些链接说明需求背景，不替代本仓库自己的功能或兼容性证据。
 
-## 三步开始
+## 快速开始
 
 ```console
-$ pipx install skillferry
+$ pipx install skillferry==0.1.0
 $ skillferry init my-workspace && cd my-workspace
 # 放入 skills/**，编辑 instructions/global.md 与 mcp/servers.toml
 $ skillferry plan          # 先读等级与冲突
@@ -80,12 +109,15 @@ $ skillferry apply         # 先备份、只写自己拥有的路径
 $ skillferry doctor        # exit 0 = 完全同步
 ```
 
+如果不需要固定版本，可以省略版本号。当前公开版本是 `0.1.0`，精确的发布身份
+与验收边界见 [0.1.0 发布验收记录](docs/acceptance/release-0.1.0.md)。
+
 `plan` 永不落盘；存在冲突时 `apply` 拒绝执行。退出码：`0` 同步、`1` 出错、
 `2` 可安全应用的漂移、`3` 冲突需人工决策（`--resolve <id>=adopt|overwrite|keep-local`）。
 
 ## 兼容性矩阵
 
-等级由各适配器依据有证据支撑的能力表产出（[docs/AGENT_MATRIX.md](docs/AGENT_MATRIX.md)），
+等级由各适配器依据有证据支撑的能力表产出（[docs/zh-CN/AGENT_MATRIX.md](docs/zh-CN/AGENT_MATRIX.md)），
 没有验证过的加载路径绝不标 `native`。
 
 | 资产 | Codex | Claude Code | DeepSeek Harness |
@@ -107,7 +139,7 @@ $ skillferry doctor        # exit 0 = 完全同步
 ## 安全边界
 
 安全是架构而不是文档，完整模型见
-[docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)。可机器验证的要点：
+[docs/zh-CN/THREAT_MODEL.md](docs/zh-CN/THREAT_MODEL.md)。可机器验证的要点：
 
 - workspace schema **在解析期拒绝字面秘密**：MCP `env` 值只允许
   `secret:env/NAME` 或 `secret:file/PATH` 引用（负向测试锁定）。
@@ -138,7 +170,7 @@ schema_version = 1
 
 合并序为 `base < target < platform < host < local override`：列表整体替换、
 字典深合并、每个值的来源在 `plan` 中可见、冲突从不静默
-（[docs/PORTABILITY_CONTRACT.md](docs/PORTABILITY_CONTRACT.md)）。
+（[docs/zh-CN/PORTABILITY_CONTRACT.md](docs/zh-CN/PORTABILITY_CONTRACT.md)）。
 
 ## 不是什么
 
@@ -147,24 +179,24 @@ skillferry 刻意做成无头 CLI。它不是全量 dotfiles 同步器（只管�
 拒绝）、没有 GUI、不切换 API
 供应商、不同步会话/记忆、不承诺"任意插件无损转换"。与现有工具的诚实对比
 （包括可写与不可写的声明边界）见
-[docs/COMPARISON.md](docs/COMPARISON.md)。
+[docs/zh-CN/COMPARISON.md](docs/zh-CN/COMPARISON.md)。
 
 ## 适配器开发
 
 新增一个目标成本有界：实现 `adapters/base.py` 的接口（资产落点、有证据的
 等级、MCP 渲染），并在 `adapters/registry.py` 注册。每个等级需要达到的证据
-门槛见 [docs/AGENT_MATRIX.md](docs/AGENT_MATRIX.md)。
+门槛见 [docs/zh-CN/AGENT_MATRIX.md](docs/zh-CN/AGENT_MATRIX.md)。
 
 ## 从 codex-profile-sync 迁移
 
 `skillferry migrate --from codex-profile-sync <bundle> --output <dir>` 把旧
 bundle 的 skills 与 MCP 声明转换成 draft workspace（凭据值转为
 `secret:env/...` 引用；旧 bundle 永不改动）。详见
-[docs/MIGRATION.md](docs/MIGRATION.md)。
+[docs/zh-CN/MIGRATION.md](docs/zh-CN/MIGRATION.md)。
 
 ## 文档地图
 
-[docs/](docs/) 目录的完整索引见 [docs/README.md](docs/README.md)。按角色
+[docs/](docs/) 目录的完整索引见 [docs/zh-CN/README.md](docs/zh-CN/README.md)。按角色
 出发：
 
 | 角色 | 从这里开始 |
@@ -174,14 +206,14 @@ bundle 的 skills 与 MCP 声明转换成 draft workspace（凭据值转为
 | 贡献者 | [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md) + [docs/zh-CN/AGENT_MATRIX.md](docs/zh-CN/AGENT_MATRIX.md) |
 | 对比替代方案 | [docs/zh-CN/COMPARISON.md](docs/zh-CN/COMPARISON.md) |
 | 旧版迁移 | [docs/zh-CN/MIGRATION.md](docs/zh-CN/MIGRATION.md) |
-| 验收证据 | [docs/acceptance/macos-native.md](docs/acceptance/macos-native.md) · [docs/acceptance/windows-native.md](docs/acceptance/windows-native.md)（英文证据记录） |
+| 发布与平台证据 | [docs/acceptance/release-0.1.0.md](docs/acceptance/release-0.1.0.md) · [docs/acceptance/macos-native.md](docs/acceptance/macos-native.md) · [docs/acceptance/windows-native.md](docs/acceptance/windows-native.md)（英文证据记录） |
 
-英文文档入口为 [README.md](README.md)；更新历史见 [CHANGELOG.md](CHANGELOG.md)
-（英文）。
+英文文档入口为 [README.md](README.md)，英文更新历史见 [CHANGELOG.md](CHANGELOG.md)；
+中文更新历史见 [CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 
 ## 路线图
 
-- **A（本版本）**：可移植内核——skills/rules/MCP 渲染、等级、所有权账本、
+- **A（0.1.0）**：可移植内核——skills/rules/MCP 渲染、等级、所有权账本、
   import/export/migrate、三平台 × Python 3.11–3.13 CI。
 - **B**：Gemini CLI 适配器（v1.x 首位）、lockfile/溯源记录。
 - **C**：团队层（`scope/team` overlay）、SSH/远程目标。

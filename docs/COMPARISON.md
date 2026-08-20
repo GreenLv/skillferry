@@ -44,8 +44,9 @@ rather than "supports N agents".
 
 **We can write (evidence anchors):**
 
-- Codex and DSH both natively discover `~/.agents/skills/` — verified by the
-  author's macOS acceptance ([acceptance/macos-native.md](acceptance/macos-native.md)).
+- Codex and DSH both natively discover `~/.agents/skills/` — exercised in the
+  author's macOS and Windows acceptance records
+  ([macOS](acceptance/macos-native.md), [Windows](acceptance/windows-native.md)).
 - The workspace format is target-neutral; each agent is only a render
   target ([PORTABILITY_CONTRACT](PORTABILITY_CONTRACT.md)).
 - Secret references are schema-enforced; `export --shareable` never expands

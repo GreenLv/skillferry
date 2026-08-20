@@ -4,7 +4,8 @@ skillferry 的仓库文档分为三处：根目录的双语 README
 （[README.md](../../README.md) / [README.zh-CN.md](../../README.zh-CN.md)）、
 本 `docs/` 目录，以及根目录的
 [CONTRIBUTING.md](../../CONTRIBUTING.md) /
-[SECURITY.md](../../SECURITY.md) / [CHANGELOG.md](../../CHANGELOG.md)。
+[SECURITY.md](../../SECURITY.md) / [CHANGELOG.md](../../CHANGELOG.md) /
+[CHANGELOG.zh-CN.md](../../CHANGELOG.zh-CN.md)。
 本页是 `docs/` 树的中文入口，并按角色给出阅读顺序。
 
 ## 按角色阅读
@@ -25,6 +26,7 @@ skillferry 的仓库文档分为三处：根目录的双语 README
 | [AGENT_MATRIX.md](AGENT_MATRIX.md) 适配器能力矩阵 | 各目标的资产落点（加载路径），以及每个等级背后的证据 |
 | [COMPARISON.md](COMPARISON.md) 与现有工具对比 | 实测的生态对比；对竞品哪些能写、哪些不能写 |
 | [MIGRATION.md](MIGRATION.md) 迁移指南 | 从 codex-profile-sync bundle 的一次性转换 |
+| [发布验收记录](../acceptance/release-0.1.0.md) | 0.1.0 的发布身份、门禁结果、发布后回读与证据边界 |
 | [英文验收记录](../acceptance/macos-native.md) | macOS 真机完整演练的证据记录 |
 | [英文验收记录](../acceptance/windows-native.md) | Windows 真机完整演练的证据记录 |
 
@@ -33,5 +35,7 @@ skillferry 的仓库文档分为三处：根目录的双语 README
 
 ## 英文原版
 
-每个中文文档对应的英文原版位于 `docs/` 同级目录、文件名相同，两份保持
-同步。若发现差异，以英文原版为准，并欢迎提交 issue。
+每个核心中文文档对应的英文原版位于 `docs/` 同级目录、文件名相同，两份保持
+同步。验收记录是英文原始证据；更新历史另见根目录的
+[CHANGELOG.zh-CN.md](../../CHANGELOG.zh-CN.md)。若发现翻译差异，以英文原版
+和验收记录中的事实为准，并欢迎提交 issue。

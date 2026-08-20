@@ -3,7 +3,8 @@
 skillferry's documentation lives in three places: the bilingual root READMEs
 ([README.md](../README.md) / [README.zh-CN.md](../README.zh-CN.md)), this
 `docs/` tree, and the root-level [CONTRIBUTING.md](../CONTRIBUTING.md) /
-[SECURITY.md](../SECURITY.md) / [CHANGELOG.md](../CHANGELOG.md). This page
+[SECURITY.md](../SECURITY.md) / [CHANGELOG.md](../CHANGELOG.md) /
+[CHANGELOG.zh-CN.md](../CHANGELOG.zh-CN.md). This page
 maps the `docs/` tree and suggests a reading order per role.
 
 ## Reading paths
@@ -24,6 +25,7 @@ maps the `docs/` tree and suggests a reading order per role.
 | [AGENT_MATRIX.md](AGENT_MATRIX.md) | Per-target loading paths (where each asset lands) and the evidence behind every grade |
 | [COMPARISON.md](COMPARISON.md) | Measured landscape comparison; what we can and cannot claim about competitors |
 | [MIGRATION.md](MIGRATION.md) | One-time conversion from a codex-profile-sync bundle |
+| [acceptance/release-0.1.0.md](acceptance/release-0.1.0.md) | Release identity, gate results, publication readback, and evidence boundaries |
 | [acceptance/macos-native.md](acceptance/macos-native.md) | Evidence record: full rehearsal on a real macOS machine |
 | [acceptance/windows-native.md](acceptance/windows-native.md) | Evidence record: full rehearsal on a real Windows machine |
 | [acceptance/zero-change-codex-sync.md](acceptance/zero-change-codex-sync.md) | Proof that building skillferry never mutated the legacy codex-sync repo |
@@ -35,4 +37,5 @@ command transcripts and machine evidence, not prose to translate.
 
 The core documents have Chinese translations in
 [zh-CN/](zh-CN/README.md); the root entry point is
-[README.zh-CN.md](../README.zh-CN.md).
+[README.zh-CN.md](../README.zh-CN.md), with release history in
+[CHANGELOG.zh-CN.md](../CHANGELOG.zh-CN.md).

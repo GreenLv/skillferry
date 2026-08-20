@@ -76,9 +76,9 @@ restrictive permissions and redacted backups.
   with normalized formatting (stated honestly in the grade notes;
   `tests` assert other keys survive). Backup + redacted copy cover recovery.
 - **Windows ACL semantics.** POSIX mode bits do not map onto Windows; on
-  Windows, secrets land in config files with default ACLs. Windows-native
-  acceptance is tracked separately
-  ([docs/acceptance/windows-native.md](acceptance/windows-native.md)) and is
+  Windows, secrets land in config files with default ACLs. Native Windows
+  acceptance passes with this limitation documented separately
+  ([docs/acceptance/windows-native.md](acceptance/windows-native.md)); it is
   not inferred from macOS or CI results.
 
 ## Out of scope
