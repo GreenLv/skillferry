@@ -7,6 +7,9 @@ import json
 import pytest
 from conftest import apply_workspace, make_workspace, plan_workspace
 
+from skillferry.io_ops import ApplyError, apply_plan
+from skillferry.models import SyncPlan, TargetApply, TextWrite
+
 
 def test_apply_creates_all_three_target_shapes(tmp_path, state_dir, fake_home):
     ws = make_workspace(tmp_path)
@@ -136,6 +139,67 @@ def test_source_deletion_removes_managed_file(tmp_path, state_dir, fake_home):
     assert not target.exists()
 
 
+def test_source_skill_removal_uninstalls_whole_managed_skill(
+    tmp_path, state_dir, fake_home
+):
+    import shutil
+
+    ws = make_workspace(tmp_path)
+    apply_workspace(ws, fake_home)
+    shutil.rmtree(ws / "skills" / "release-checklist")
+    plan = plan_workspace(ws, fake_home)
+    assert any(
+        change.kind == "skill"
+        and change.name == "release-checklist"
+        and change.action == "delete"
+        for change in plan.changes
+    )
+    apply_plan(plan)
+    assert not (fake_home / ".agents" / "skills" / "release-checklist" / "SKILL.md").exists()
+    assert not (fake_home / ".claude" / "skills" / "release-checklist" / "SKILL.md").exists()
+
+
+def test_source_mcp_removal_deletes_all_owned_target_entries(
+    tmp_path, state_dir, fake_home
+):
+    ws = make_workspace(tmp_path)
+    apply_workspace(ws, fake_home)
+    (ws / "mcp" / "servers.toml").write_text("[servers]\n", encoding="utf-8")
+    plan = plan_workspace(ws, fake_home)
+    assert not plan.conflicts
+    assert {change.target for change in plan.changes if change.kind == "mcp"} == {
+        "codex",
+        "claude",
+        "dsh",
+    }
+    apply_plan(plan)
+    assert "mcp_servers.time" not in (
+        fake_home / ".codex" / "config.toml"
+    ).read_text(encoding="utf-8")
+    claude = json.loads((fake_home / ".claude" / ".claude.json").read_text())
+    assert "time" not in claude["mcpServers"]
+    dsh = (fake_home / ".dsh" / "profiles" / "web" / "cordis.patch.yml").read_text()
+    assert "mcp-time" not in dsh
+
+
+def test_source_mcp_removal_conflicts_with_local_modification(
+    tmp_path, state_dir, fake_home
+):
+    ws = make_workspace(tmp_path)
+    apply_workspace(ws, fake_home)
+    config = fake_home / ".codex" / "config.toml"
+    config.write_text(
+        config.read_text().replace('command = "npx"', 'command = "local-edit"'),
+        encoding="utf-8",
+    )
+    (ws / "mcp" / "servers.toml").write_text("[servers]\n", encoding="utf-8")
+    plan = plan_workspace(ws, fake_home, targets=("codex",))
+    assert any(
+        conflict.kind == "mcp" and "source removal" in conflict.reason
+        for conflict in plan.conflicts
+    )
+
+
 def test_missing_secret_env_is_conflict(tmp_path, state_dir, fake_home, monkeypatch):
     monkeypatch.delenv("GITHUB_PERSONAL_ACCESS_TOKEN", raising=False)
     ws = make_workspace(tmp_path)
@@ -235,6 +299,35 @@ def test_rollback_restores_targets_on_failure(tmp_path, state_dir, fake_home):
     assert (fake_home / ".codex" / "AGENTS.md").read_bytes() == before_agents
 
 
+def test_rollback_restores_partial_writes_in_failing_target(tmp_path, state_dir):
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    managed = tmp_path / "managed"
+    managed.mkdir()
+    first = managed / "first.txt"
+    first.write_text("old", encoding="utf-8")
+    blocker = managed / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+    target_apply = TargetApply(
+        target="codex",
+        roots=[managed],
+        writes=[
+            TextWrite(first, "new", 0o600, "first"),
+            TextWrite(blocker / "second.txt", "new", 0o600, "second"),
+        ],
+    )
+    plan = SyncPlan(
+        workspace_root=workspace,
+        platform="macos",
+        targets=("codex",),
+        homes={"codex": managed},
+        applies={"codex": target_apply},
+    )
+    with pytest.raises(ApplyError, match="rollback"):
+        apply_plan(plan)
+    assert first.read_text(encoding="utf-8") == "old"
+
+
 def test_backups_redact_secrets(tmp_path, state_dir, fake_home, monkeypatch):
     monkeypatch.setenv("GITHUB_PERSONAL_ACCESS_TOKEN", "ghp_" + "X" * 24)
     ws = make_workspace(tmp_path)
@@ -259,6 +352,7 @@ def test_backups_redact_secrets(tmp_path, state_dir, fake_home, monkeypatch):
     assert redacted.is_file()
     assert "X" * 24 not in redacted.read_text()
     assert "<redacted>" in redacted.read_text()
+    assert "--v2" not in redacted.read_text()
 
 
 def test_windows_plan_renders_windows_home(tmp_path, state_dir, fake_home):

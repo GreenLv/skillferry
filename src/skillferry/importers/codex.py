@@ -12,6 +12,7 @@ from ..secrets import looks_like_secret, scan_text
 from .base import (
     Finding,
     ImportReport,
+    audit_tree,
     classify_name,
     copy_tree,
     empty_manifests,
@@ -137,6 +138,17 @@ def import_codex(
     if skills.is_dir():
         for child in sorted(skills.iterdir()):
             if child.is_dir() and (child / "SKILL.md").is_file():
+                findings = audit_tree(child, label=str(child))
+                if findings:
+                    report.findings.append(
+                        Finding(
+                            f"skills/{child.name}",
+                            "SENSITIVE",
+                            f"unsafe skill content ({findings[0]}); not copied",
+                            "skipped",
+                        )
+                    )
+                    continue
                 copy_tree(child, destination / "skills" / child.name, label=str(child))
                 report.findings.append(
                     Finding(f"skills/{child.name}", "PORTABLE", "skill directory", "copied")

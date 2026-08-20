@@ -139,7 +139,11 @@ def scan_text(text: str, *, label: str) -> list[str]:
                 findings.append(f"{label}:{line_no}: {name}")
     for part in SENSITIVE_KEY_PARTS:
         # Catch ``key = <non-reference value>`` style assignments.
-        for match in re.finditer(rf"^\s*[\w.-]*{part}[\w.-]*\s*[=:]\s*(\S.*)$", text, re.I):
+        for match in re.finditer(
+            rf"^\s*[\w.-]*{part}[\w.-]*\s*[=:]\s*(\S.*)$",
+            text,
+            re.I | re.M,
+        ):
             value = match.group(1).strip().strip("\"'")
             if value and not is_secret_ref(value):
                 findings.append(

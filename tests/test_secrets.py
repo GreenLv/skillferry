@@ -78,6 +78,11 @@ def test_scan_text_finds_credentials():
     assert any("TOKEN" in f or "GitHub" in f for f in findings)
 
 
+def test_scan_text_finds_sensitive_assignment_after_first_line():
+    findings = scan_text("# heading\npassword = hunter2\n", label="f")
+    assert any("password" in finding for finding in findings)
+
+
 def test_redact_text_masks_toml_json_yaml_keys():
     text = (
         'TOKEN = "a"\n'

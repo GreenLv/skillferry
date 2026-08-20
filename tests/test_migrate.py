@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from skillferry.migrate import migrate_codex_profile_sync
 
 FAKE_TOKEN = "ghp_" + "X" * 24
@@ -61,6 +63,15 @@ def test_migrate_never_touches_bundle(tmp_path):
         if path.is_file()
     }
     assert before == after
+
+
+def test_migrate_rejects_symlink_inside_skills(tmp_path):
+    bundle = build_bundle(tmp_path)
+    outside = tmp_path / "private.txt"
+    outside.write_text("private", encoding="utf-8")
+    (bundle / "skills" / "demo-skill" / "linked.txt").symlink_to(outside)
+    with pytest.raises(ValueError, match="symlink"):
+        migrate_codex_profile_sync(bundle, tmp_path / "out")
 
 
 def test_migrate_requires_sync_toml(tmp_path):

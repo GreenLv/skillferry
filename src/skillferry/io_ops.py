@@ -63,6 +63,7 @@ def _safe_target(path: Path, roots: list[Path]) -> None:
 def _existing_targets(apply: TargetApply) -> list[Path]:
     paths = [copy.target for copy in apply.copies]
     paths += [write.target for write in apply.writes]
+    paths += [delete.target for delete in apply.deletes]
     return [path for path in paths if path.exists()]
 
 
@@ -87,8 +88,9 @@ def _backup_group(apply: TargetApply, backup_dir: Path) -> dict[Path, Path]:
         if not write.redact_backup or write.target not in backups:
             continue
         try:
-            redacted = redact_text(write.text) if write.text else ""
-        except (UnicodeError, ValueError):
+            original = backups[write.target].read_text(encoding="utf-8")
+            redacted = redact_text(original)
+        except (OSError, UnicodeError, ValueError):
             continue
         redacted_path = backups[write.target].with_name(
             backups[write.target].name + ".redacted"
@@ -145,6 +147,7 @@ def apply_plan(plan: SyncPlan) -> Path:
     previous = load_ledger(plan.workspace_root)
     groups: dict[str, tuple[TargetApply, dict[Path, Path], set[Path]]] = {}
     applied: list[str] = []
+    active: str | None = None
 
     for target in plan.targets:
         apply = plan.applies.get(target)
@@ -167,16 +170,21 @@ def apply_plan(plan: SyncPlan) -> Path:
         for target in plan.targets:
             if target not in groups:
                 continue
+            active = target
             apply, _, _ = groups[target]
             _apply_group(apply)
             applied.append(target)
+            active = None
         ledger = previous
         ledger["platform"] = plan.platform
         for target in plan.targets:
-            if target in plan.applies and plan.applies[target].ledger:
+            if target in plan.applies:
                 ledger["targets"][target] = plan.applies[target].ledger
         save_ledger(ledger)
     except Exception as exc:
+        if active is not None and active in groups:
+            apply, backups, created = groups[active]
+            _rollback_group(apply, backups, created)
         for target in reversed(applied):
             apply, backups, created = groups[target]
             _rollback_group(apply, backups, created)

@@ -22,9 +22,13 @@ restrictive permissions and redacted backups.
    env values must match `secret:env/NAME` or `secret:file/PATH`; anything
    else fails schema validation before any plan is built
    (`src/skillferry/workspace.py`, negative tests in `tests/test_workspace.py`).
+   Imported and migrated skill trees are inspected before copying; detected
+   credential content, runtime-state filenames, opaque binaries, and symlinks
+   are refused rather than labeled portable.
 2. **Secrets leaking through exports.** `export --shareable` scans every
    copied file for credential-shaped content and forbids symlinks; it refuses
-   to export on any finding and never expands a reference
+   to export opaque binaries it cannot inspect, refuses on any finding, and
+   never expands a reference
    (`src/skillferry/secrets.py`, `tests/test_export_audit.py`).
 3. **Secrets leaking through reports/logs.** `plan --json`/`doctor --json`
    emit only references; rendered values never reach `public_dict()`
@@ -44,7 +48,8 @@ restrictive permissions and redacted backups.
    (`tests/test_workspace.py`, `test_protected_mcp_server_never_managed`).
 7. **Path-based attacks.** Symlinks are rejected in workspaces, in target
    parents, and at every write; absolute paths and `..` are rejected in the
-   schema; apply operations are confined to declared managed roots
+   schema; import and legacy migration reject symlinks before copying; apply
+   operations are confined to declared managed roots
    (`src/skillferry/io_ops.py`, `tests/test_plan_apply.py`).
 8. **Accidental publication of local overrides.** `workspace.local.toml` is
    gitignored, excluded from exports, and its filename is forbidden by

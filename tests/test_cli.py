@@ -111,6 +111,30 @@ def test_status_reports_ledger(tmp_path, state_dir, fake_home):
     assert "codex" in output
 
 
+def test_adopt_only_apply_persists_ownership_ledger(tmp_path, state_dir, fake_home):
+    ws = make_workspace(tmp_path)
+    code, _ = run(ws, fake_home, "apply", "--target", "codex", "--yes")
+    assert code == 0
+    skill = fake_home / ".agents" / "skills" / "setup-skillferry" / "SKILL.md"
+    skill.write_text(skill.read_text() + "\nlocal edit\n", encoding="utf-8")
+    resolution = "skill:codex:setup-skillferry:SKILL.md=adopt"
+    code, output = run(
+        ws,
+        fake_home,
+        "apply",
+        "--target",
+        "codex",
+        "--yes",
+        "--resolve",
+        resolution,
+    )
+    assert code == 0
+    assert "Ownership ledger updated" in output
+    code, output = run(ws, fake_home, "plan", "--target", "codex")
+    assert code == 0
+    assert "Conflicts:" not in output
+
+
 def test_export_command(tmp_path, state_dir):
     ws = make_workspace(tmp_path)
     destination = tmp_path / "share"

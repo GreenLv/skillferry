@@ -252,7 +252,11 @@ def _export_shareable(workspace: Path, destination: Path, forbid: list[str]) -> 
                 continue
             try:
                 text = source.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
+            except UnicodeDecodeError:
+                findings.append(f"{relative}: opaque binary content requires manual review")
+                continue
+            except OSError as exc:
+                findings.append(f"{relative}: cannot inspect content: {exc}")
                 continue
             for finding in scan_text(text, label=str(relative)):
                 findings.append(finding)
@@ -382,6 +386,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if plan.conflicts:
                 return EXIT_CONFLICT
             if not plan.changes:
+                if plan.ledger_changed:
+                    backup = apply_plan(plan)
+                    if not args.as_json:
+                        print(f"Ownership ledger updated. Recoverable backups: {backup}")
+                    return 0
                 print("Nothing to apply: the workspace is already in sync.")
                 return 0
             if not args.yes:

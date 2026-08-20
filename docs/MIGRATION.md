@@ -20,7 +20,7 @@ $ skillferry migrate --from codex-profile-sync <bundle-dir> --output my-workspac
 
 | Legacy (sync.toml bundle) | Workspace result |
 | --- | --- |
-| `skills/` (when `skills.enabled = true`) | `skills/` copied as-is; `default_targets` covers all three targets |
+| `skills/` (when `skills.enabled = true`) | Safety-audited `skills/` copy; symlinks, sensitive/runtime files, detected credentials, and opaque binaries are refused; `default_targets` covers all three targets |
 | `config/common.toml` `[mcp_servers.<name>]` (except `node_repl`) | `mcp/servers.toml` entries; literal env values become `secret:env/<KEY>` references |
 | — | `instructions/global.md` stub, empty extension manifest, overlay skeletons |
 

@@ -12,6 +12,8 @@ import shutil
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from ..secrets import scan_text
+
 CLASSIFICATIONS = ("PORTABLE", "LOCAL-ONLY", "SENSITIVE", "UNKNOWN")
 
 RUNTIME_NAMES = (
@@ -72,14 +74,41 @@ def prepare_output(path: Path) -> Path:
     return path
 
 
-def copy_tree(source: Path, destination: Path, *, label: str) -> None:
+def audit_tree(source: Path, *, label: str) -> list[str]:
+    """Return sensitive-content findings and reject unsafe tree topology."""
     if source.is_symlink():
         raise ValueError(f"{label} may not be a symlink: {source}")
+    findings: list[str] = []
     for entry in source.rglob("*"):
+        if entry.name in IGNORED_NAMES:
+            continue
         if entry.is_symlink():
             raise ValueError(f"{label} contains a symlink: {entry}")
+        if not entry.is_file():
+            continue
+        relative = entry.relative_to(source)
+        classification = classify_name(entry.name)
+        if classification in ("SENSITIVE", "LOCAL-ONLY"):
+            findings.append(f"{relative}: {classification.lower()} filename")
+            continue
+        try:
+            text = entry.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            findings.append(f"{relative}: opaque binary content requires manual review")
+            continue
+        except OSError as exc:
+            findings.append(f"{relative}: cannot inspect content: {exc}")
+            continue
+        findings.extend(scan_text(text, label=str(relative)))
+    return findings
+
+
+def copy_tree(source: Path, destination: Path, *, label: str) -> None:
+    findings = audit_tree(source, label=label)
+    if findings:
+        raise ValueError(f"{label} is not safely portable: {findings[0]}")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source, destination)
+    shutil.copytree(source, destination, dirs_exist_ok=True)
 
 
 def classify_name(name: str) -> str:

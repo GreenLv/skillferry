@@ -18,7 +18,7 @@ from typing import Any
 
 from ..models import Change, TextWrite
 from ..workspace import Extension, ServerSpec, WorkspaceError
-from .base import Adapter, TargetEnv, mcp_entry_decision
+from .base import Adapter, TargetEnv, mcp_entry_decision, mcp_removal_decision
 
 BEGIN_MARKER = "# >>> BEGIN SKILLFERRY DSH MCP >>>"
 END_MARKER = "# <<< END SKILLFERRY DSH MCP <<<"
@@ -253,7 +253,7 @@ class DshAdapter(Adapter):
             if resolved is None:
                 return  # conflict already recorded
             resolved_map[server.name] = resolved
-        desired = desired_block_text(servers, resolved_map)
+        desired = desired_block_text(servers, resolved_map) if servers else ""
 
         lines = original.splitlines(keepends=True)
         try:
@@ -291,9 +291,9 @@ class DshAdapter(Adapter):
                     )
                     return
 
-        known = {server.name for server in servers}
-        parsed = _parse_current_block(current_block, known) if current_block else {}
         prior = ctx.previous.get("mcp", {})
+        known = {server.name for server in servers} | set(prior)
+        parsed = _parse_current_block(current_block, known) if current_block else {}
         if current_block and parsed is None:
             decision = ctx.resolve(f"mcp:{ctx.target}:block")
             if decision != "overwrite":
@@ -305,6 +305,17 @@ class DshAdapter(Adapter):
                     f"mcp:{ctx.target}:block",
                 )
                 return
+        unexpected = set(parsed or {}) - {f"mcp-{name}" for name in known}
+        if unexpected and ctx.resolve(f"mcp:{ctx.target}:block") != "overwrite":
+            ctx.conflict(
+                "mcp",
+                "all",
+                str(target),
+                "managed DSH MCP block contains unregistered entries: "
+                + ", ".join(sorted(unexpected)),
+                f"mcp:{ctx.target}:block",
+            )
+            return
 
         kept_local = False
         for server in servers:
@@ -339,6 +350,41 @@ class DshAdapter(Adapter):
                 next_state[server.name] = next_entry
                 continue
             next_state[server.name] = next_entry
+
+        desired_names = {server.name for server in servers}
+        for name in sorted(set(prior) - desired_names):
+            entry = (parsed or {}).get(f"mcp-{name}")
+            current_values: dict | None = None
+            current_env: dict[str, str] = {}
+            if entry is not None:
+                current_values = {
+                    "command": entry["command"],
+                    "args": list(entry["args"]),
+                }
+                current_env = {
+                    str(key): str(value) for key, value in entry["env"].items()
+                }
+            action = mcp_removal_decision(
+                ctx,
+                name=name,
+                path=str(target),
+                current_values=current_values,
+                current_env=current_env,
+                prior=prior[name],
+                workspace_root=ctx.ws.root,
+            )
+            if action in ("delete", "absent"):
+                next_state.pop(name, None)
+            elif action == "keep":
+                kept_local = True
+                next_state[name] = {
+                    "values": current_values or prior[name].get("values", {}),
+                    "env_refs": {},
+                    "adopted": True,
+                    "env_count": len(current_env),
+                }
+            else:
+                return
 
         if merged != original and not kept_local:
             label = "create" if not current_block else "update"

@@ -92,6 +92,7 @@ class SyncPlan:
     warnings: list[str] = field(default_factory=list)
     manual_steps: dict[str, list[str]] = field(default_factory=dict)
     applies: dict[str, TargetApply] = field(default_factory=dict)
+    ledger_changed: bool = False
 
     def public_dict(self) -> dict[str, Any]:
         """JSON-safe plan summary; never contains resolved secret values."""
@@ -108,4 +109,5 @@ class SyncPlan:
             "manual_steps": {
                 key: list(value) for key, value in self.manual_steps.items()
             },
+            "ledger_changed": self.ledger_changed,
         }

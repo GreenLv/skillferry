@@ -17,7 +17,7 @@ import tomlkit
 
 from ..models import Change, TextWrite
 from ..workspace import Extension, ServerSpec
-from .base import Adapter, TargetEnv, mcp_entry_decision
+from .base import Adapter, TargetEnv, mcp_entry_decision, mcp_removal_decision
 
 
 def _canonical_json(value: Any) -> str:
@@ -129,6 +129,7 @@ class CodexAdapter(Adapter):
         prior_all = ctx.previous.get("mcp", {})
         # name -> (command, args_json, env_json)
         sections_to_set: dict[str, tuple[str, str, str]] = {}
+        sections_to_delete: list[str] = []
 
         for server in servers:
             resolved = resolved_env(ctx, server)
@@ -185,7 +186,57 @@ class CodexAdapter(Adapter):
             )
             next_state[server.name] = next_entry
 
-        if not sections_to_set:
+        desired_names = {server.name for server in servers}
+        for name in sorted(set(prior_all) - desired_names):
+            mcp_servers = document.get("mcp_servers")
+            current_values: dict | None = None
+            current_env: dict[str, str] = {}
+            if mcp_servers is not None and not isinstance(mcp_servers, dict):
+                ctx.conflict(
+                    "mcp",
+                    name,
+                    str(target),
+                    "mcp_servers is no longer a table",
+                    f"mcp:{ctx.target}:{name}",
+                )
+                continue
+            if isinstance(mcp_servers, dict) and name in mcp_servers:
+                entry = mcp_servers[name]
+                if not isinstance(entry, dict):
+                    ctx.conflict(
+                        "mcp",
+                        name,
+                        str(target),
+                        "mcp_servers entry is not a table",
+                        f"mcp:{ctx.target}:{name}",
+                    )
+                    continue
+                plain = {key: value.unwrap() for key, value in entry.items()}
+                if plain.get("command") is not None:
+                    current_values = {
+                        "command": plain.get("command"),
+                        "args": list(plain.get("args", [])),
+                    }
+                raw_env = plain.get("env", {})
+                if isinstance(raw_env, dict):
+                    current_env = {str(key): str(value) for key, value in raw_env.items()}
+            action = mcp_removal_decision(
+                ctx,
+                name=name,
+                path=str(target),
+                current_values=current_values,
+                current_env=current_env,
+                prior=prior_all[name],
+                workspace_root=ctx.ws.root,
+            )
+            if action == "delete":
+                del document["mcp_servers"][name]
+                sections_to_delete.append(name)
+                next_state.pop(name, None)
+            elif action in ("absent", "keep"):
+                next_state.pop(name, None)
+
+        if not sections_to_set and not sections_to_delete:
             return
         for name, (command, args_json, env_json) in sorted(sections_to_set.items()):
             if not isinstance(document.get("mcp_servers"), dict):
@@ -212,7 +263,7 @@ class CodexAdapter(Adapter):
             Change(
                 "mcp",
                 ctx.target,
-                ", ".join(sorted(sections_to_set)),
+                ", ".join(sorted(set(sections_to_set) | set(sections_to_delete))),
                 "create" if not original else "update",
                 str(target),
             )

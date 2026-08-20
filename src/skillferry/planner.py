@@ -142,6 +142,8 @@ def build_plan(
         plan_mcp(ctx)
         plan_extensions(ctx)
         apply.ledger = ctx.next_ledger
+        if apply.ledger != ctx.previous:
+            plan.ledger_changed = True
         _check_protect(plan, apply, env, ws.protect.paths)
         plan.applies[target] = apply
 

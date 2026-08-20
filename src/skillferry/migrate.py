@@ -8,14 +8,13 @@ as manual follow-ups and never copied. The old bundle is never modified.
 
 from __future__ import annotations
 
-import shutil
 import tomllib
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import tomlkit
 
-from .importers.base import empty_manifests, prepare_output
+from .importers.base import copy_tree, empty_manifests, prepare_output
 from .secrets import looks_like_secret
 
 
@@ -132,7 +131,7 @@ def migrate_codex_profile_sync(bundle: Path, output: Path) -> MigrationReport:
     skills_rel = str(skills.get("directory", "skills")) if isinstance(skills, dict) else "skills"
     skills_dir = bundle / skills_rel
     if skills_enabled and skills_dir.is_dir():
-        shutil.copytree(skills_dir, destination / "skills", dirs_exist_ok=True)
+        copy_tree(skills_dir, destination / "skills", label=str(skills_dir))
         report.notes.append(
             MigrationNote("copied", "skills", "skill directory migrated as-is")
         )

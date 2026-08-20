@@ -33,3 +33,14 @@ First release: the portable agent-workspace core (roadmap stage A).
 - Documentation: bilingual README, THREAT_MODEL, AGENT_MATRIX,
   PORTABILITY_CONTRACT, COMPARISON, MIGRATION, and the macOS native
   acceptance record.
+
+### Fixed
+
+- Hardened multiline secret scanning, imported-skill inspection, opaque-binary
+  rejection, and legacy migration against symlink traversal.
+- Made rollback restore partial writes in the failing target group and preserve
+  deleted files, with redacted views generated from the actual backup bytes.
+- Persisted ledger-only `adopt` / `keep-local` resolutions.
+- Reconciled whole-skill and MCP-server removals across Codex, Claude Code, and
+  DeepSeek Harness without deleting locally modified owned content silently.
+- Expanded the regression suite from 68 to 79 tests.

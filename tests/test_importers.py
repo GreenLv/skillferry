@@ -64,6 +64,18 @@ def test_import_codex_token_becomes_reference(tmp_path):
     assert FAKE_TOKEN not in registry
 
 
+def test_import_codex_skips_skill_with_sensitive_content(tmp_path):
+    codex, skills = build_codex_home(tmp_path / "src")
+    skill_md = skills / "demo-skill" / "SKILL.md"
+    skill_md.write_text(skill_md.read_text() + "\npassword = hunter2\n", encoding="utf-8")
+    output = tmp_path / "out"
+    report = import_codex(output=output, codex_home=codex, skills_home=skills)
+    finding = next(item for item in report.findings if item.rel == "skills/demo-skill")
+    assert finding.classification == "SENSITIVE"
+    assert finding.action == "skipped"
+    assert not (output / "skills" / "demo-skill").exists()
+
+
 def test_import_codex_nonempty_destination_rejected(tmp_path):
     codex, skills = build_codex_home(tmp_path / "src")
     output = tmp_path / "out"

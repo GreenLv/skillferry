@@ -44,10 +44,12 @@ def plan_skills(ctx: RenderContext) -> None:
 
     previous = ctx.previous.get("skills", {})
     next_state: dict[str, Any] = {name: dict(records) for name, records in previous.items()}
+    active_names: set[str] = set()
 
     for name, skill in sorted(ctx.skills.items()):
         if target not in effective_targets(skill, ctx.ws):
             continue
+        active_names.add(name)
         ctx.plan.grades.append(ctx.adapter.grade_skill(skill))
         prior = previous.get(name, {})
         target_dir = skill_dir / name
@@ -124,7 +126,8 @@ def plan_skills(ctx: RenderContext) -> None:
             target_record = _target_record(destination)
             resolution_id = f"skill:{target}:{name}:{relative}"
             if target_record is None:
-                continue  # already gone; drop from the ledger
+                entry.pop(relative, None)
+                continue
             if target_record.get("unsafe"):
                 ctx.conflict(
                     "skill",
@@ -140,8 +143,9 @@ def plan_skills(ctx: RenderContext) -> None:
                         Change("skill", target, name, "delete", str(destination))
                     )
                     ctx.apply.deletes.append(FileDelete(target=destination))
+                    entry.pop(relative, None)
                 elif decision == "adopt":
-                    entry[relative] = target_record
+                    entry.pop(relative, None)
                 else:
                     ctx.conflict(
                         "skill",
@@ -155,7 +159,62 @@ def plan_skills(ctx: RenderContext) -> None:
                     Change("skill", target, name, "delete", str(destination))
                 )
                 ctx.apply.deletes.append(FileDelete(target=destination))
+                entry.pop(relative, None)
 
+        if entry:
+            next_state[name] = entry
+        else:
+            next_state.pop(name, None)
+
+    # Reconcile skills that disappeared entirely or no longer target this
+    # adapter. Per-file ownership checks still protect local modifications.
+    for name, prior in sorted(previous.items()):
+        if name in active_names:
+            continue
+        entry: dict[str, Any] = dict(prior)
+        target_dir = skill_dir / name
+        for relative, old_record in sorted(prior.items()):
+            destination = target_dir / relative
+            target_record = _target_record(destination)
+            resolution_id = f"skill:{target}:{name}:{relative}"
+            if target_record is None:
+                entry.pop(relative, None)
+                continue
+            if target_record.get("unsafe"):
+                ctx.conflict(
+                    "skill",
+                    name,
+                    str(destination),
+                    "managed target became a symlink or non-file",
+                    resolution_id,
+                )
+                continue
+            if not _same(target_record, old_record):
+                decision = ctx.resolve(resolution_id)
+                if decision == "overwrite":
+                    ctx.plan.changes.append(
+                        Change("skill", target, name, "delete", str(destination))
+                    )
+                    ctx.apply.deletes.append(FileDelete(target=destination))
+                    entry.pop(relative, None)
+                elif decision == "adopt":
+                    # The source no longer owns this path; keep it locally and
+                    # release it from the ledger.
+                    entry.pop(relative, None)
+                else:
+                    ctx.conflict(
+                        "skill",
+                        name,
+                        str(destination),
+                        "managed file changed before source skill removal",
+                        resolution_id,
+                    )
+                continue
+            ctx.plan.changes.append(
+                Change("skill", target, name, "delete", str(destination))
+            )
+            ctx.apply.deletes.append(FileDelete(target=destination))
+            entry.pop(relative, None)
         if entry:
             next_state[name] = entry
         else:

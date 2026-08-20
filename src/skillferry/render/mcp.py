@@ -69,7 +69,7 @@ def plan_mcp(ctx: RenderContext) -> None:
         eligible.append(server)
 
     if getattr(ctx.adapter, "plan_all_servers", False):
-        if eligible:
+        if eligible or previous:
             ctx.adapter.mcp_plan_all(ctx, eligible, next_state)
         return
     for server in eligible:

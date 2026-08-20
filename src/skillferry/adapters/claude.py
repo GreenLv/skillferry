@@ -16,7 +16,7 @@ from typing import Any
 
 from ..models import Change, TextWrite
 from ..workspace import Extension, ServerSpec
-from .base import Adapter, TargetEnv, mcp_entry_decision
+from .base import Adapter, TargetEnv, mcp_entry_decision, mcp_removal_decision
 
 
 class ClaudeAdapter(Adapter):
@@ -156,6 +156,7 @@ class ClaudeAdapter(Adapter):
 
         prior_all = ctx.previous.get("mcp", {})
         entries_to_set: dict[str, dict[str, Any]] = {}
+        entries_to_delete: list[str] = []
         for server in servers:
             resolved = resolved_env(ctx, server)
             if resolved is None:
@@ -207,7 +208,47 @@ class ClaudeAdapter(Adapter):
             entries_to_set[server.name] = desired_entry
             next_state[server.name] = next_entry
 
-        if not entries_to_set:
+        desired_names = {server.name for server in servers}
+        for name in sorted(set(prior_all) - desired_names):
+            current = servers_table.get(name)
+            current_values: dict | None = None
+            current_env: dict[str, str] = {}
+            if current is not None and not isinstance(current, dict):
+                ctx.conflict(
+                    "mcp",
+                    name,
+                    str(target),
+                    "managed mcpServers entry is no longer an object",
+                    f"mcp:{ctx.target}:{name}",
+                )
+                continue
+            if isinstance(current, dict):
+                if current.get("command") is not None:
+                    current_values = {
+                        "type": current.get("type", "stdio"),
+                        "command": current.get("command"),
+                        "args": current.get("args", []),
+                    }
+                raw_env = current.get("env", {})
+                if isinstance(raw_env, dict):
+                    current_env = {str(key): str(value) for key, value in raw_env.items()}
+            action = mcp_removal_decision(
+                ctx,
+                name=name,
+                path=str(target),
+                current_values=current_values,
+                current_env=current_env,
+                prior=prior_all[name],
+                workspace_root=ctx.ws.root,
+            )
+            if action == "delete":
+                del servers_table[name]
+                entries_to_delete.append(name)
+                next_state.pop(name, None)
+            elif action in ("absent", "keep"):
+                next_state.pop(name, None)
+
+        if not entries_to_set and not entries_to_delete:
             return
         for name, entry in sorted(entries_to_set.items()):
             servers_table[name] = entry
@@ -219,7 +260,7 @@ class ClaudeAdapter(Adapter):
             Change(
                 "mcp",
                 ctx.target,
-                ", ".join(sorted(entries_to_set)),
+                ", ".join(sorted(set(entries_to_set) | set(entries_to_delete))),
                 "create" if not original else "update",
                 str(target),
             )

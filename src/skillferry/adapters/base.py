@@ -194,7 +194,7 @@ def mcp_entry_decision(
     if prior.get("adopted"):
         local_matches_prior = False
     elif not prior.get("env_refs"):
-        local_matches_prior = current_values == prior.get("values")
+        local_matches_prior = current_values == prior.get("values") and current_env == {}
     else:
         try:
             prior_env = {
@@ -230,6 +230,60 @@ def mcp_entry_decision(
         )
         return "conflict", {}
     return "update", next_entry
+
+
+def mcp_removal_decision(
+    ctx: RenderContext,
+    *,
+    name: str,
+    path: str,
+    current_values: dict | None,
+    current_env: dict,
+    prior: dict,
+    workspace_root: Path,
+) -> str:
+    """Decide whether a previously owned, now-removed MCP entry is safe to delete."""
+    from ..secrets import resolve_secret
+    from ..workspace import WorkspaceError
+
+    if current_values is None:
+        return "absent"
+    if prior.get("adopted"):
+        return "keep"
+    try:
+        prior_env = {
+            key: resolve_secret(
+                reference,
+                workspace_root=workspace_root,
+                expand=True,
+                label=f"mcp:{name}:env.{key}",
+            )
+            for key, reference in prior.get("env_refs", {}).items()
+        }
+    except WorkspaceError as exc:
+        ctx.conflict(
+            "mcp",
+            name,
+            path,
+            f"cannot verify removed entry against the previous apply: {exc}",
+            f"mcp:{ctx.target}:{name}",
+        )
+        return "conflict"
+    if current_values == prior.get("values") and current_env == prior_env:
+        return "delete"
+    decision = ctx.resolve(f"mcp:{ctx.target}:{name}")
+    if decision == "overwrite":
+        return "delete"
+    if decision == "adopt":
+        return "keep"
+    ctx.conflict(
+        "mcp",
+        name,
+        path,
+        "managed entry changed before source removal",
+        f"mcp:{ctx.target}:{name}",
+    )
+    return "conflict"
 
 
 def _adopted_entry(current_values: dict, current_env: dict) -> dict:

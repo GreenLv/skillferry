@@ -46,6 +46,28 @@ def test_export_refuses_forbidden_literal(tmp_path):
     assert not destination.exists()
 
 
+def test_export_refuses_sensitive_assignment_after_first_line(tmp_path):
+    ws = make_workspace(tmp_path)
+    (ws / "instructions" / "global.md").write_text(
+        "# heading\npassword = hunter2\n", encoding="utf-8"
+    )
+    destination = tmp_path / "share"
+    with pytest.raises(Exception, match="refused"):
+        _export_shareable(ws, destination, [])
+    assert not destination.exists()
+
+
+def test_export_refuses_opaque_binary(tmp_path):
+    ws = make_workspace(tmp_path)
+    asset = ws / "skills" / "release-checklist" / "assets" / "opaque.bin"
+    asset.parent.mkdir()
+    asset.write_bytes(b"\xffopaque")
+    destination = tmp_path / "share"
+    with pytest.raises(Exception, match="refused"):
+        _export_shareable(ws, destination, [])
+    assert not destination.exists()
+
+
 def test_export_skips_runtime_state(tmp_path):
     ws = make_workspace(tmp_path)
     (ws / "state").mkdir()
@@ -94,6 +116,26 @@ def test_audit_public_tree_fails_on_token(tmp_path):
     )
     assert result.returncode == 1
     assert "leak.md" in result.stderr
+
+
+def test_audit_public_tree_fails_on_opaque_binary(tmp_path):
+    import shutil
+
+    copy = tmp_path / "repo"
+    shutil.copytree(
+        REPO_ROOT,
+        copy,
+        ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", ".pytest_cache"),
+    )
+    (copy / "opaque.bin").write_bytes(b"\xff" + FAKE_TOKEN.encode())
+    result = subprocess.run(
+        [sys.executable, str(copy / "scripts" / "audit_public_tree.py"), str(copy)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "opaque.bin" in result.stderr
 
 
 def test_audit_public_tree_allows_skill_files(tmp_path):

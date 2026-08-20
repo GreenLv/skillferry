@@ -29,6 +29,7 @@ SKIP_DIRS = {
     "secrets",
 }
 SKIP_SELF_SUFFIX = "scripts/audit_public_tree.py"
+SKIP_NAMES = {".DS_Store", "Thumbs.db"}
 FORBIDDEN_NAMES = {
     "auth.json",
     "history.jsonl",
@@ -70,6 +71,8 @@ def main() -> int:
 
     for path in iter_files(root):
         relative = path.relative_to(root)
+        if path.name in SKIP_NAMES:
+            continue
         if relative.as_posix().endswith(SKIP_SELF_SUFFIX):
             continue
         if path.name in FORBIDDEN_NAMES:
@@ -78,7 +81,11 @@ def main() -> int:
             findings.append(f"{relative}: forbidden secret-suffix filename")
         try:
             text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError:
+            findings.append(f"{relative}: opaque binary content requires explicit review")
+            continue
+        except OSError as exc:
+            findings.append(f"{relative}: cannot inspect content: {exc}")
             continue
         for label, pattern in PATTERNS.items():
             if pattern.search(text):
