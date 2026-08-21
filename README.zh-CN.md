@@ -72,7 +72,9 @@ MCP github
   dsh     translated   inserted as dsh-mcp-client entries in the profile cordis.patch.yml
 $ skillferry apply --workspace ~/workspaces/demo              # ④ 一份 workspace 渲染三家
 $ skillferry doctor --workspace ~/workspaces/demo             # ⑤ 零漂移
-$ skillferry export --shareable ~/workspaces/public           # 证明：公共副本永远无秘密
+$ skillferry export ~/workspaces/public                       # 证明：公共副本永远无秘密
+Exported 15 file(s) to ~/workspaces/public
+No secret references were expanded; no secrets were copied.
 ```
 
 五拍流程（导入 → Secret 引用 → 分级 → 应用 → 无秘密导出）由测试套件在 CI
@@ -112,8 +114,10 @@ $ skillferry doctor        # exit 0 = 完全同步
 如果不需要固定版本，可以省略版本号。当前公开版本是 `0.1.0`，精确的发布身份
 与验收边界见 [0.1.0 发布验收记录](docs/acceptance/release-0.1.0.md)。
 
-`plan` 永不落盘；存在冲突时 `apply` 拒绝执行。退出码：`0` 同步、`1` 出错、
-`2` 可安全应用的漂移、`3` 冲突需人工决策（`--resolve <id>=adopt|overwrite|keep-local`）。
+`plan` 永不落盘；存在冲突时 `apply` 拒绝执行。`doctor` 退出码：`0` 同步、
+`1` 出错、`2` 可安全应用的漂移、`3` 冲突；`plan` 与 `apply` 遇到冲突返回
+`3` 且不写任何文件。冲突需要人工决策
+（`--resolve <id>=adopt|overwrite|keep-local`）。
 
 ## 兼容性矩阵
 
@@ -143,8 +147,8 @@ $ skillferry doctor        # exit 0 = 完全同步
 
 - workspace schema **在解析期拒绝字面秘密**：MCP `env` 值只允许
   `secret:env/NAME` 或 `secret:file/PATH` 引用（负向测试锁定）。
-- `export --shareable` 逐文件扫描，发现任何凭据形态内容即拒绝导出；
-  引用永不展开。
+- 可共享导出（`skillferry export <目标目录>`）逐文件扫描，发现任何凭据
+  形态内容即拒绝导出；引用永不展开。
 - 备份为原始副本（0600、仅本地、用于精确回滚）+ **脱敏副本**（供人工查看）。
 - JSON 报告与日志只含引用、永不含解析后的值。
 - `[protect]` 声明 workspace 永不管理的路径；误声明在 schema 层被拒绝。
@@ -183,8 +187,9 @@ skillferry 刻意做成无头 CLI。它不是全量 dotfiles 同步器（只管�
 
 ## 适配器开发
 
-新增一个目标成本有界：实现 `adapters/base.py` 的接口（资产落点、有证据的
-等级、MCP 渲染），并在 `adapters/registry.py` 注册。每个等级需要达到的证据
+新增一个目标成本有界：实现 `src/skillferry/adapters/base.py` 的接口（资产
+落点、有证据的等级、MCP 渲染），并在 `src/skillferry/adapters/registry.py`
+注册。每个等级需要达到的证据
 门槛见 [docs/zh-CN/AGENT_MATRIX.md](docs/zh-CN/AGENT_MATRIX.md)。
 
 ## 从 codex-profile-sync 迁移

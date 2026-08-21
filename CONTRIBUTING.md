@@ -39,7 +39,7 @@ leakage).
 Implement the `Adapter` interface in
 [src/skillferry/adapters/base.py](src/skillferry/adapters/base.py) (asset
 locations, grade derivations, MCP rendering), register it in
-`adapters/registry.py`, add shape tests for the rendered files, and record
+`src/skillferry/adapters/registry.py`, add shape tests for the rendered files, and record
 the capability evidence in the matrix. A new adapter without evidence stays
 out of `native` by construction.
 

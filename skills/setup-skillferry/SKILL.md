@@ -41,7 +41,8 @@ Harness (DSH) — without ever copying secrets or runtime state.
   that refusal explicit.
 - Secrets are references, not values: MCP env entries are
   `secret:env/NAME` or `secret:file/PATH`. Each machine supplies the real
-  values locally; `export --shareable` never expands them.
+  values locally; the shareable export (`skillferry export <destination>`)
+  never expands them.
 - The workspace is target-neutral. Use `overlays/platform/*.toml` for OS
   differences and `overlays/target/*.toml` for agent differences — never
   fork the workspace per agent.

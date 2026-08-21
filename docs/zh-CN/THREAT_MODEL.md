@@ -22,8 +22,8 @@ skillferry 搬运的是**能力定义**——从不搬运秘密，从不搬运�
    （`src/skillferry/workspace.py`，`tests/test_workspace.py` 中的负向测试）。
    导入与迁移的 skill 树在复制前先被检查；检测到的凭据内容、运行时状态
    文件名、不透明二进制与软链接都会被拒绝，而不会被标为可移植。
-2. **秘密通过导出泄露。** `export --shareable` 逐文件扫描凭据形态内容并
-   禁止软链接；对无法检查的不透明二进制拒绝导出，发现任何问题即整体拒绝，
+2. **秘密通过导出泄露。** 可共享导出（`skillferry export <目标目录>`）逐文件
+   扫描凭据形态内容并禁止软链接；对无法检查的不透明二进制拒绝导出，发现任何问题即整体拒绝，
    且永不展开引用（`src/skillferry/secrets.py`，`tests/test_export_audit.py`）。
 3. **秘密通过报告/日志泄露。** `plan --json` / `doctor --json` 只输出引用；
    渲染后的值永远到不了 `public_dict()`

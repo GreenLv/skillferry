@@ -75,7 +75,7 @@ source), or `keep-local` (alias of adopt, for intent clarity).
 - References resolve **only** at apply time, on the local machine, from the
   process environment or a local file.
 - A missing secret source is a conflict before anything is written.
-- Reports, JSON output, logs, and `export --shareable` contain references,
+- Reports, JSON output, logs, and the shareable export contain references,
   never resolved values.
 - Backups: raw copies (exact rollback) plus redacted copies (human
   inspection), both local-only with restrictive permissions.

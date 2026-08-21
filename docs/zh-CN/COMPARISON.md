@@ -44,8 +44,8 @@
   [Windows](../acceptance/windows-native.md)）。
 - workspace 格式目标中立；每个 Agent 只是渲染目标
   （[PORTABILITY_CONTRACT](PORTABILITY_CONTRACT.md)）。
-- 秘密引用由 schema 强制；`export --shareable` 永不展开它们；这是 CI 中
-  机器验证过的，不是文档化意图。
+- 秘密引用由 schema 强制；可共享导出永不展开它们；这是 CI 中机器验证过
+  的，不是文档化意图。
 - 每个等级都从能力表推导（[AGENT_MATRIX](AGENT_MATRIX.md)），包括诚实的
   `manual`/`degraded` 标签。
 

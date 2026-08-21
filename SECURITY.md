@@ -24,7 +24,7 @@ reporter's consent.
 ## What we consider a vulnerability
 
 - Any path where a resolved secret value can appear in `plan --json`,
-  `doctor --json`, logs, `export --shareable`, or the local state ledger.
+  `doctor --json`, logs, the shareable export, or the local state ledger.
 - Any path where `apply` silently overwrites content it does not own.
 - Any path where the schema admits a literal secret into a workspace
   definition.

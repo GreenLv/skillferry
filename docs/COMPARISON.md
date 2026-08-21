@@ -49,7 +49,7 @@ rather than "supports N agents".
   ([macOS](acceptance/macos-native.md), [Windows](acceptance/windows-native.md)).
 - The workspace format is target-neutral; each agent is only a render
   target ([PORTABILITY_CONTRACT](PORTABILITY_CONTRACT.md)).
-- Secret references are schema-enforced; `export --shareable` never expands
+- Secret references are schema-enforced; the shareable export never expands
   them; this is machine-verified in CI, not documented intent.
 - Every grade is derived from the capability table
   ([AGENT_MATRIX](AGENT_MATRIX.md)), including honest `manual`/`degraded`

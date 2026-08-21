@@ -11,6 +11,8 @@
 
 - 按“产品要解决的问题、核心承诺、发布状态、证据边界”重新组织双语 README。
 - 新增中文更新日志，并同步文档索引、可移植性矩阵、对比说明、威胁模型和发布记录。
+- 修正 `export` 命令的文档写法：可共享导出是 `skillferry export <目标目录>`，
+  并不存在 `--shareable` 旗标（CLI 中从未实现过该旗标）。
 - 当前文档整理与已经发布的 `v0.1.0` tag 分开；本节不包含运行时行为变化。
 
 ## 0.1.0 — 2026-08-20
@@ -23,7 +25,7 @@
   和受保护路径，再由适配器渲染成 Codex、Claude Code、DeepSeek Harness 的配置。
 - `plan` 输出有证据支撑的 `native`、`translated`、`degraded`、`manual` 或
   `unsupported` 等级，而不是把所有目标都写成无损兼容。
-- Secret 引用留在 workspace 中，解析后的值只留在本机；`export --shareable`
+- Secret 引用留在 workspace 中，解析后的值只留在本机；可共享的 `export`
   会拒绝包含凭据形态内容的文件，也不会展开引用。
 - 基于哈希的所有权账本、显式冲突解决、备份、脱敏副本和按目标回滚，避免静默覆盖。
 
@@ -34,7 +36,7 @@
   声明。字面秘密、路径穿越、软链接、Windows junction/reparse point、不可审计二进制
   和受保护状态误声明都会被拒绝。
 - 增加 CLI 工作流：`init`、`import --from codex|claude`、`plan`、`apply`、`doctor`、
-  `status`、`export --shareable` 和 `migrate --from codex-profile-sync`。
+  `status`、可共享的 `export` 和 `migrate --from codex-profile-sync`。
 - 增加 Codex、Claude Code、DeepSeek Harness 适配器、`setup-skillferry` 与
   `release-checklist` 种子 skill，以及可运行的 `examples/starter-workspace`。
 - 增加公共树审计器、workspace 校验器、双语 README 与核心文档翻译、可移植性契约、

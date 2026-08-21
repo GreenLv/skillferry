@@ -14,6 +14,9 @@ a compact validation note. `0.1.0` is the latest published release.
   release status, and evidence boundaries.
 - Added a Chinese changelog and synchronized the documentation index,
   portability matrix, comparison, threat model, and release record.
+- Corrected the documented `export` command: the shareable export is
+  `skillferry export <destination>`, not a `--shareable` flag, which never
+  existed in the CLI.
 - Kept the current documentation follow-up separate from the already-published
   `v0.1.0` tag; no runtime behavior changes are included here.
 
@@ -29,7 +32,7 @@ First public release of the portable agent-workspace core (roadmap stage A).
 - `plan` reports evidence-backed `native`, `translated`, `degraded`, `manual`,
   or `unsupported` grades instead of treating every target as lossless.
 - Secret references stay in the workspace while resolved values remain local;
-  `export --shareable` refuses credential-shaped content and never expands a
+  the shareable `export` refuses credential-shaped content and never expands a
   reference.
 - Hash-based ownership, explicit conflict resolution, backups, redacted views,
   and per-target rollback prevent silent overwrites.
@@ -42,7 +45,7 @@ First public release of the portable agent-workspace core (roadmap stage A).
   Literal secrets, path traversal, symlinks, Windows junctions/reparse points,
   opaque binaries, and protected-state mis-declarations are rejected.
 - Added the CLI workflow: `init`, `import --from codex|claude`, `plan`, `apply`,
-  `doctor`, `status`, `export --shareable`, and
+  `doctor`, `status`, the shareable `export`, and
   `migrate --from codex-profile-sync`.
 - Added Codex, Claude Code, and DeepSeek Harness adapters, the
   `setup-skillferry` and `release-checklist` seed skills, and the runnable

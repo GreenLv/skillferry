@@ -27,8 +27,9 @@ restrictive permissions and redacted backups.
    Imported and migrated skill trees are inspected before copying; detected
    credential content, runtime-state filenames, opaque binaries, and symlinks
    are refused rather than labeled portable.
-2. **Secrets leaking through exports.** `export --shareable` scans every
-   copied file for credential-shaped content and forbids symlinks; it refuses
+2. **Secrets leaking through exports.** The shareable export
+   (`skillferry export <destination>`) scans every copied file for
+   credential-shaped content and forbids symlinks; it refuses
    to export opaque binaries it cannot inspect, refuses on any finding, and
    never expands a reference
    (`src/skillferry/secrets.py`, `tests/test_export_audit.py`).

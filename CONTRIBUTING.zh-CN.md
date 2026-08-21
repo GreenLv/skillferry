@@ -31,8 +31,9 @@ $ python scripts/validate_workspace.py examples/starter-workspace
 ## 新增适配器
 
 在 [src/skillferry/adapters/base.py](src/skillferry/adapters/base.py) 实现
-`Adapter` 接口（资产落点、等级推导、MCP 渲染），在 `adapters/registry.py`
-注册，为渲染出的文件添加形状测试，并在矩阵中记录能力证据。没有证据的
+`Adapter` 接口（资产落点、等级推导、MCP 渲染），在
+`src/skillferry/adapters/registry.py` 注册，为渲染出的文件添加形状测试，并在
+矩阵中记录能力证据。没有证据的
 新适配器按构造就无法进入 `native`。
 
 ## 发布清单

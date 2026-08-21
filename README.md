@@ -80,8 +80,9 @@ MCP github
   dsh     translated   inserted as dsh-mcp-client entries in the profile cordis.patch.yml
 $ skillferry apply --workspace ~/workspaces/demo              # 4. one workspace, three agents
 $ skillferry doctor --workspace ~/workspaces/demo             # 5. zero drift
-$ skillferry export --shareable ~/workspaces/public           # proof: no secrets, ever
-Exported 15 file(s). No secret references were expanded.
+$ skillferry export ~/workspaces/public                       # proof: no secrets, ever
+Exported 15 file(s) to ~/workspaces/public
+No secret references were expanded; no secrets were copied.
 ```
 
 The five-beat flow — import, secret references, per-target grades, apply,
@@ -120,8 +121,9 @@ the current release and the exact release identity is recorded in
 [docs/acceptance/release-0.1.0.md](docs/acceptance/release-0.1.0.md).
 
 `plan` and `apply` are dry-run-safe by design: `plan` never writes, and
-`apply` refuses to run when any conflict exists. Exit codes: `0` in sync,
-`1` error, `2` safe drift, `3` conflict needs a human decision
+`apply` refuses to run when any conflict exists. `doctor` exits `0` in sync,
+`1` error, `2` safe drift, `3` conflict; `plan` and `apply` exit `3` on
+conflicts without writing. Conflicts take a human decision
 (`--resolve <id>=adopt|overwrite|keep-local`).
 
 ## Compatibility matrix
@@ -155,9 +157,10 @@ The security model is architecture, not documentation. See
 - The workspace schema **rejects literal secrets**: MCP `env` values must be
   `secret:env/NAME` or `secret:file/PATH` references (`src/skillferry/workspace.py`,
   negative tests in `tests/test_workspace.py`).
-- `export --shareable` scans every copied file and refuses to export on any
-  credential-shaped content; it never expands a reference
-  (`src/skillferry/secrets.py`, `tests/test_export_audit.py`).
+- The shareable export (`skillferry export <destination>`) scans every copied
+  file and refuses to export on any credential-shaped content; it never
+  expands a reference (`src/skillferry/secrets.py`,
+  `tests/test_export_audit.py`).
 - Backups are raw (0600, local-only, for exact rollback) **plus** redacted
   copies for human inspection (`src/skillferry/io_ops.py`,
   `test_backups_redact_secrets`).
@@ -204,9 +207,9 @@ cannot claim about competitors, is in
 
 ## Adapter development
 
-Adding a target is bounded: implement `adapters/base.py`'s interface (where
-each asset lands, the capability-backed grades, and the MCP rendering) and
-register it in `adapters/registry.py`. See
+Adding a target is bounded: implement `src/skillferry/adapters/base.py`'s
+interface (where each asset lands, the capability-backed grades, and the MCP
+rendering) and register it in `src/skillferry/adapters/registry.py`. See
 [docs/AGENT_MATRIX.md](docs/AGENT_MATRIX.md) for the evidence bar each grade
 must meet.
 
